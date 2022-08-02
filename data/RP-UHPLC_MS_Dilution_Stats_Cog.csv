@@ -1,0 +1,4 @@
+col_name_vec,desc_vec,type_vec
+r_corr,Pearson Correlation R value.,numeric
+r2_linear,Linear Regression R^2 Value.,numeric
+r2_linear_<=0.8,Set to TRUE if r2_linear is less than 0.8.,factor
