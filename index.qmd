@@ -1,0 +1,2713 @@
+---
+title: "Quarto Report Example With Plotly and Trelliscopejs"
+subtitle: This document was prepared on `r format(Sys.Date())`.
+bibliography: utils/bibliography.bib
+csl: utils/f1000research.csl
+knitr:
+  opts_chunk:
+    dpi: 600
+    message: FALSE
+    warning: FALSE
+    echo: TRUE
+    eval: TRUE
+    cache: FALSE
+    comment: ">"
+    tidyverse-quiet: TRUE
+format:
+  html:
+    theme: cerulean
+    highlight-style: pygments
+    toc: true
+    toc-depth: 4
+    toc-location: left
+    number-sections: false
+    code-fold: show
+    code-overflow: scroll
+    code-line-numbers: true
+    code-copy: hover
+    code-tools: true
+    self-contained: false
+    smooth-scroll: true
+---
+
+# Introduction
+
+Here is a report showing how to create injection sequence plot and dilution plot using [`plotly`](https://plotly.com/r/) for each transition.
+
+::: panel-tabset
+
+## Injection Sequence Plot
+![Injection Sequence Plot](images/Injection_Sequence.JPG){fig-alt="An injection sequence plot."}
+
+## Dilution Plot
+![Dilution Plot](images/Dilution_Plot.JPG){fig-alt="A dilution plot."}
+
+:::
+
+These multiple interactive plots will be displayed as a trellis using [`trelliscopejs`](https://hafen.github.io/trelliscopejs/).
+
+# R Packages Used
+
+```{r load_library, results='asis'}
+#| code-fold: true
+
+# For session info and package reporting
+library("report")
+
+# For reading files
+library("here")
+library("readr")
+
+# For interactive tables
+library("reactable")
+library("htmltools")
+
+# For data wrangling
+library("dplyr")
+library("tidyr")
+library("tibble")
+library("purrr")
+library("broom")
+library("glue")
+
+# For palatte colours
+library("scales")
+
+# For lipid annotation
+library("rgoslin") # From github
+
+# For plotting
+library("plotly")
+
+# For cognostics
+library("assertable")
+
+# For combining plotly plots
+library("manipulateWidget")
+
+# For trellis plot
+library("trelliscopejs")
+
+sessionInfo() |> 
+  report::report() |> 
+  summary()
+```
+
+# Input Data
+
+The data we are using are from [Wolrab et. al 2022](https://doi.org/10.1038/s41467-021-27765-9) [@Wolrab2022].
+
+::: panel-tabset
+## Peak Area Data
+
+We read the transition's peak area measurement using Reversed-Phase UltraHigh-Performance Liquid Chromatography/ Mass Spectrometry (RP-UHPLC)/MS). The measurement is done by lab 3 during Phase II of the project.
+
+The first column is the name of the sample. Subsequent columns are the transition's integrated peak areas.
+
+```{r read area data}
+
+area_data <- readr::read_csv("https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Area.csv")
+```
+
+Here is how the data (first 50 rows) looks like
+
+```{r preview area data}
+#| code-fold: true
+
+area_data[1:50,] |> 
+  reactable::reactable(
+    defaultPageSize = 5,
+    defaultColDef = reactable::colDef(
+      minWidth = 350),
+    columns = list(
+      Sample_Name = reactable::colDef(
+        # Freeze first column
+        sticky = "left",
+        style = list(borderRight = "1px solid #eee"),
+        headerStyle = list(borderRight = "1px solid #eee"),
+        minWidth = 150
+      )
+      ),
+    bordered = TRUE,
+    highlight = TRUE,
+    paginationType = "jump"
+    )
+```
+
+## Transition Name Annotation
+
+The transition annotation provides information about the given transitions that has been measured.
+
+```{r read transition name annotation}
+transition_name_annot <- readr::read_csv("https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Transition_Name_Annot.csv")
+
+```
+
+Here are the column descriptions.
+
+| Column Name                   | Column Description                                                                                                                             |
+|-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| Transition_Name               | Name of the transition to be mesured in the mass spectrometer.                                                                                 |
+| Lipid_Name                    | Converted transition name to suit lipid nomenclature set by [Liebisch et. al. 2020](https://doi.org/10.1021/acs.jafc.0c07175) [@Liebisch2020]. |
+| For_Rgoslin                   | Input transition for the R package [rgoslin](https://github.com/lifs-tools/rgoslin) [@GOSLIN], [@GOSLIN2] to annotate.                         |
+| Precursor_Ion                 | The ion to be fragmented into smaller fragment ions.                                                                                           |
+| Product_Ion                   | Ions created from fragmentation of the precursor ion.                                                                                          |
+| Retention_Time\_\[min\]       | Transition name's expectred retention time.                                                                                                    |
+| Delta_Retention_Time\_\[min\] | Time window to acquire the transition. Each transition is acquired in the range Retention Time +/- 0.5(Delta Retention Time).                  |
+| Collision_Energy              | Rate of acceleration as the precursor ions enter the Q2 for fragmentation.                                                                     |
+| Cell_Accelerator_Voltage      | Rate of acceleration as the product ions leave the Q2.                                                                                         |
+| Polarity                      | Settings (Positive or Negative) for the mass spectrometry to detect (positive or negative) ions.                                               |
+| isISTD                        | Set to TRUE if the given transition name an internal standard.                                                                                 |
+
+Here is how the data looks like
+
+```{r preview transition name annotation}
+#| code-fold: true
+
+transition_name_annot |> 
+  reactable::reactable(
+    defaultPageSize = 5,
+    defaultColDef = reactable::colDef(minWidth = 300),
+    columns = list(
+      Transition_Name = reactable::colDef(
+      # Freeze first column
+      sticky = "left",
+      style = list(borderRight = "1px solid #eee"),
+      headerStyle = list(borderRight = "1px solid #eee"),
+      minWidth = 250
+    )),
+    bordered = TRUE,
+    highlight = TRUE,
+    searchable = TRUE,
+    paginationType = "jump"
+  )
+```
+
+## Sample Annotation
+
+The sample annotation provides information about the given samples that has been measured.
+
+```{r read sample annotation}
+sample_annot <- readr::read_csv("https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Sample_Annot.csv")
+```
+
+Here are the column descriptions.
+
++-----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Column Name           | Column Description                                                                                                                                                                                                                                      |
++=======================+=========================================================================================================================================================================================================================================================+
+| Injection_Sequence    | The order in which the samples are injected to the mass spectrometer for data acquisition.                                                                                                                                                              |
++-----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Acqusition_Time_Stamp | The time the sample is being measured. It is expressed yyyy-mm-dd hh:mm:ss timezone.                                                                                                                                                                    |
++-----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Sample_Name           | The name of the sample.                                                                                                                                                                                                                                 |
++-----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| QC_Sample_Type        | Quality control category of the sample. More information can be found in [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                                                                        |
+|                       |                                                                                                                                                                                                                                                         |
+|                       | -   SPL stands for experimental/unknown samples.                                                                                                                                                                                                        |
+|                       |                                                                                                                                                                                                                                                         |
+|                       | -   BQC stands for batch/pooled quality control.                                                                                                                                                                                                        |
+|                       |                                                                                                                                                                                                                                                         |
+|                       | -   TQC stands for technical (or pooled lipid extracts) quality control.                                                                                                                                                                                |
+|                       |                                                                                                                                                                                                                                                         |
+|                       | -   RQC stands for response (or pooled QC dilution) quality control.                                                                                                                                                                                    |
+|                       |                                                                                                                                                                                                                                                         |
+|                       | -   PBLK stands for processed blanks.                                                                                                                                                                                                                   |
+|                       |                                                                                                                                                                                                                                                         |
+|                       | -   LTR stands for long term reference.                                                                                                                                                                                                                 |
+|                       |                                                                                                                                                                                                                                                         |
+|                       | -   NIST stands for SRM1950 NIST plasma sample from [Simón-Manso et. al. 2013](https://doi.org/10.1021/ac402503m) [@Simón-Manso2013] . It is a standard reference material provides a method to allow quality assessment across different laboratories. |
++-----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Vial_Position         | The sample's vial position in the autosampler.                                                                                                                                                                                                          |
++-----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+Here is how it looks like
+
+```{r preview sample annotation}
+#| code-fold: true
+
+sample_annot |> 
+  reactable::reactable(
+    defaultPageSize = 5,
+    defaultColDef = reactable::colDef(minWidth = 250),
+    columns = list(
+      Injection_Sequence = reactable::colDef(
+      # Freeze first column
+      sticky = "left",
+      style = list(borderRight = "1px solid #eee"),
+      headerStyle = list(borderRight = "1px solid #eee"),
+      minWidth = 200
+    )),
+    bordered = TRUE,
+    highlight = TRUE,
+    searchable = TRUE,
+    paginationType = "jump"
+    )
+```
+
+## Dilution Annotation
+
+The dilution annotation provides information about the given RQC samples that has been measured.
+
+```{r read dilution annotation}
+dilution_annot <- readr::read_csv("https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Dilution_Annot.csv")
+
+```
+
+Here are the column descriptions.
+
+| Column Name                   | Column Description                                                     |
+|-------------------------------|------------------------------------------------------------------------|
+| Sample_Name                   | The name of the sample.                                                |
+| Dilution_Batch_Name           | Name of the dilution batch.                                            |
+| Relative_Sample_Amount\_\[%\] | Relative sample amount in %. Used as the x-axis of the dilution curve. |
+
+Here is how it looks like
+
+```{r preview dilution annotation}
+#| code-fold: true
+
+dilution_annot |> 
+  reactable::reactable(
+    defaultPageSize = 5,
+    defaultColDef = reactable::colDef(minWidth = 270),
+    columns = list(
+      Sample_Name = reactable::colDef(
+      # Freeze first column
+      sticky = "left",
+      style = list(borderRight = "1px solid #eee"),
+      headerStyle = list(borderRight = "1px solid #eee"),
+      minWidth = 150
+    )),
+    bordered = TRUE,
+    highlight = TRUE,
+    searchable = TRUE,
+    paginationType = "jump"
+    )
+```
+:::
+
+# Nested Data
+
+## Nested Sample Data
+
+We first merge the peak area data with the sample annotation. Next, we created a nested `sample_data` for each transition name.
+
+`sample_data` will be used later to do statistical analysis for each QC sample type.
+
+```{r merge and nest sample annotation data}
+
+sample_annot_column_names <- sample_annot |> 
+  colnames()
+
+nested_sample_data <- sample_annot |> 
+  dplyr::inner_join(y = area_data, by="Sample_Name") |> 
+  tidyr::pivot_longer(cols = -dplyr::any_of(sample_annot_column_names),
+                      names_to = "Transition_Name", 
+                      values_to = "Area") |> 
+  dplyr::group_by(.data[["Transition_Name"]]) |>
+  tidyr::nest() |>
+  dplyr::rename(sample_data = .data[["data"]]) |> 
+  dplyr::ungroup()
+
+```
+
+Here is a preview of the first five rows of the `nested_sample_data`. For each `sample_data` of a given transition name, we display the first ten rows.
+
+```{r preview nested sample annotation}
+#| code-fold: true
+
+nested_sample_data[1:5,] |>
+  reactable::reactable(
+    defaultColDef = reactable::colDef(minWidth = 250),
+    columns = list(
+      sample_data = reactable::colDef(
+        details = function(index) {
+          filtered_data <- nested_sample_data[["sample_data"]][index][[1]]
+          htmltools::div(style = "padding: 1rem",
+                         reactable::reactable(
+                           data = filtered_data[1:10,],
+                           defaultPageSize = 5,
+                           defaultColDef = reactable::colDef(minWidth = 250),
+                           columns = list(Injection_Sequence = reactable::colDef(minWidth = 150),
+                                          Sample_Name = reactable::colDef(minWidth = 150)),
+                           outlined = TRUE,
+                           highlight = TRUE)
+                       )
+      }
+    )
+  )
+
+)
+
+```
+
+## Nested Dilution Data
+
+We first merge the peak area data with the dilution and sample annotation. Next, we created a nested `dilution_data` for each transition name.
+
+`dilution_data` will be used later to do dilution curve related analysis for each transition.
+
+```{r merge and nest sample dilution data}
+
+sample_annot_column_names <- sample_annot |> 
+  colnames()
+
+dilution_annot_column_names <- dilution_annot |> 
+  colnames()
+
+nested_dilution_data <- dilution_annot |> 
+  dplyr::inner_join(y = sample_annot, by="Sample_Name") |>
+  dplyr::inner_join(y = area_data, by="Sample_Name") |> 
+  tidyr::pivot_longer(cols = -dplyr::any_of(c(sample_annot_column_names,
+                                              dilution_annot_column_names)),
+                      names_to = "Transition_Name", 
+                      values_to = "Area") |> 
+  dplyr::group_by(.data[["Transition_Name"]]) |>
+  tidyr::nest() |>
+  dplyr::rename(dilution_data = .data[["data"]]) |> 
+  dplyr::ungroup()
+```
+
+Here is a preview of the first five rows of the `nested_dilution_data`. For each `dilution_data` of a given transition name, we display the first five rows.
+
+```{r preview nested dilution annotation}
+#| code-fold: true
+
+nested_dilution_data[1:5,] |>
+  reactable::reactable(
+    defaultColDef = reactable::colDef(minWidth = 250),
+    columns = list(
+      dilution_data = reactable::colDef(
+        details = function(index) {
+          filtered_data <- nested_dilution_data[["dilution_data"]][index][[1]]
+          htmltools::div(style = "padding: 1rem",
+                         reactable::reactable(
+                           data = filtered_data[1:5,],
+                           defaultPageSize = 5,
+                           defaultColDef = reactable::colDef(minWidth = 250),
+                           columns = list(Sample_Name = reactable::colDef(minWidth = 150)),
+                           outlined = TRUE,
+                           highlight = TRUE)
+                       )
+      }
+    )
+  )
+
+)
+
+```
+
+## Join them together
+
+We join the two nested data `sample_data` and `dilution_data` together
+
+```{r merge nested data toghether}
+
+nested_data <- nested_sample_data |> 
+  dplyr::inner_join(y = nested_dilution_data, by="Transition_Name")
+
+```
+
+Here is a preview of the first five rows of the `nested_data`.
+
+```{r preview nested data}
+#| code-fold: true
+
+nested_data[1:5,] |>
+  reactable::reactable(
+    defaultColDef = reactable::colDef(minWidth = 250),
+    columns = list(
+      sample_data = reactable::colDef(
+        details = function(index) {
+          filtered_data <- nested_data[["sample_data"]][index][[1]]
+          htmltools::div(style = "padding: 1rem",
+                         reactable::reactable(
+                           data = filtered_data[1:10,],
+                           defaultPageSize = 5,
+                           defaultColDef = reactable::colDef(minWidth = 250),
+                           columns = list(Injection_Sequence = reactable::colDef(minWidth = 150)),
+                           outlined = TRUE,
+                           highlight = TRUE)
+                       )}),
+      dilution_data = reactable::colDef(
+        details = function(index) {
+          filtered_data <- nested_data[["dilution_data"]][index][[1]]
+          htmltools::div(style = "padding: 1rem",
+                         reactable::reactable(
+                           data = filtered_data[1:5,],
+                           defaultPageSize = 5,
+                           defaultColDef = reactable::colDef(minWidth = 250),
+                           columns = list(Sample_Name = reactable::colDef(minWidth = 150)),
+                           outlined = TRUE,
+                           highlight = TRUE)
+                       )})
+      )
+    )
+
+```
+
+# Annotate Transition Names
+
+We now add the annotations for each transitions from `transition_name_annot` and [rgoslin](https://github.com/lifs-tools/rgoslin).
+
+## Add `transition_name_annot` annotations
+
+We first join the nested_data with our transition annotations.
+
+```{r add transition_name_annot annotation}
+
+annotated_data <- nested_data |> 
+  dplyr::inner_join(y = transition_name_annot, by="Transition_Name")
+
+```
+
+Here is a preview of the first five rows of the `annotated_data`.
+
+```{r preview annotated data 1}
+#| code-fold: true
+
+annotated_data[1:5,] |>
+  reactable::reactable(
+    defaultColDef = reactable::colDef(minWidth = 250),
+    columns = list(
+      sample_data = reactable::colDef(
+        details = function(index) {
+          filtered_data <- annotated_data[["sample_data"]][index][[1]]
+          htmltools::div(style = "padding: 1rem",
+                         reactable::reactable(
+                           data = filtered_data[1:10,],
+                           defaultPageSize = 5,
+                           defaultColDef = reactable::colDef(minWidth = 250),
+                           columns = list(Injection_Sequence = reactable::colDef(minWidth = 150)),
+                           outlined = TRUE,
+                           highlight = TRUE)
+                       )}),
+      dilution_data = reactable::colDef(
+        details = function(index) {
+          filtered_data <- annotated_data[["dilution_data"]][index][[1]]
+          htmltools::div(style = "padding: 1rem",
+                         reactable::reactable(
+                           data = filtered_data[1:5,],
+                           defaultPageSize = 5,
+                           defaultColDef = reactable::colDef(minWidth = 250),
+                           columns = list(Sample_Name = reactable::colDef(minWidth = 150)),
+                           outlined = TRUE,
+                           highlight = TRUE)
+                       )})
+      )
+    )
+
+```
+
+## Add `rgoslin` annotations
+
+### Small example
+
+The R package [rgoslin](https://github.com/lifs-tools/rgoslin) is useful in getting additional information of lipid names such as the lipid classes. A column called `For_Rgoslin` was created to convert each transition name that can be parsed by [rgoslin](https://github.com/lifs-tools/rgoslin). Unfortunately only [Coenzyme Q10](https://www.lipidmaps.org/databases/lmsd/LMPR02010001?LMID=LMPR02010001) is unable to be parsed by [rgoslin](https://github.com/lifs-tools/rgoslin). We thus add the relevant information manually.
+
+Below is an code example (not part of the pipeline) on how [rgoslin](https://github.com/lifs-tools/rgoslin) can be used
+
+```{r rgoslin demo}
+
+rgoslin_example <- annotated_data |> 
+  dplyr::select(.data[["For_Rgoslin"]]) |> 
+  dplyr::mutate(GoslinOutput = purrr::map(.data[["For_Rgoslin"]],
+                                          rgoslin::parseLipidNames)
+                ) |> 
+  tidyr::unnest(.data$GoslinOutput) |> 
+  dplyr::rows_update(
+    tibble::tibble(
+      `For_Rgoslin` = "Coenzyme Q10",
+      Lipid.Maps.Category = "PR",
+      Lipid.Maps.Main.Class = "Quinones and hydroquinones",
+      Species.Name = "Coenzyme Q10",
+      Molecular.Species.Name = "Coenzyme Q10",
+      Functional.Class.Abbr = "[Coenzyme]",
+      Functional.Class.Synonyms = "[Coenzyme, Ubiquinone]"
+    ),
+    by = "For_Rgoslin"
+)
+
+
+
+```
+
+Here is a preview of `rgoslin_example`.
+
+```{r preview rgoslin demo}
+#| code-fold: true
+
+rgoslin_example |>
+  reactable::reactable(
+    defaultPageSize = 5,
+    defaultColDef = reactable::colDef(minWidth = 250),
+    columns = list(
+      For_Rgoslin = reactable::colDef(
+      # Freeze first column
+      sticky = "left",
+      style = list(borderRight = "1px solid #eee"),
+      headerStyle = list(borderRight = "1px solid #eee"),
+      minWidth = 150
+    )),
+    bordered = TRUE,
+    highlight = TRUE,
+    searchable = TRUE,
+    paginationType = "jump"
+  )
+
+```
+
+### Pipeline example
+
+For the workflow, we do not need all the columns that [rgoslin](https://github.com/lifs-tools/rgoslin) provide.
+
+The following columns are kept instead.
+
+| Column Name               | Column Description                                                                                                                                          |
+|---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Lipid.Maps.Category       | [LIPID MAPS'](https://www.lipidmaps.org/databases/lmsd/browse) Structure Database [@Subramaniam2006] Lipid Category which the transition name belongs to.   |
+| Lipid.Maps.Main.Class     | [LIPID MAPS'](https://www.lipidmaps.org/databases/lmsd/browse) Structure Database [@Subramaniam2006] Lipid Main Class which the transition name belongs to. |
+| Species.Name              | Represented by the sum composition, i.e., sum of carbon atoms, double bond equivalent and number of additional oxygen atoms, e.g. FA 18:1;O.                |
+| Molecular.Species.Name    | Represented by lipid species with identified fatty acyl/alkyl residues, e.g. TG 16:0_18:1_18:1.                                                             |
+| Functional.Class.Abbr     | Abbreviation used to describe the lipid's functional class based on the grammar used.                                                                       |
+| Functional.Class.Synonyms | Alternative abbreviations used to describe the lipid's functional class.                                                                                    |
+
+```{r add rgoslin annotation, warning=FALSE, message=FALSE}
+
+annotated_data <- nested_data |> 
+  dplyr::inner_join(y = transition_name_annot, by="Transition_Name")
+
+annotated_data_cols <- colnames(annotated_data)
+
+annotated_data <- annotated_data |> 
+  dplyr::mutate(GoslinOutput = purrr::map(.data[["For_Rgoslin"]],
+                                          rgoslin::parseLipidNames)
+                ) |>
+  tidyr::unnest(.data$GoslinOutput) |> 
+  dplyr::select(dplyr::any_of(
+    c(annotated_data_cols,
+      "Lipid.Maps.Category", "Lipid.Maps.Main.Class",
+      "Species.Name", "Molecular.Species.Name",
+      "Functional.Class.Abbr", "Functional.Class.Synonyms")
+    )
+  ) |>
+  dplyr::rows_update(
+    tibble::tibble(
+      `For_Rgoslin` = "Coenzyme Q10",
+      Lipid.Maps.Category = "PR",
+      Lipid.Maps.Main.Class = "Quinones and hydroquinones",
+      Species.Name = "Coenzyme Q10",
+      Molecular.Species.Name = "Coenzyme Q10",
+      Functional.Class.Abbr = "[Coenzyme]",
+      Functional.Class.Synonyms = "[Coenzyme, Ubiquinone]"
+    ),
+    by = "For_Rgoslin"
+    
+)
+
+```
+
+Here is a preview of the first five rows of the `annotated_data`.
+
+```{r preview annotated data 2}
+#| code-fold: true
+
+annotated_data[1:5,] |>
+  reactable::reactable(
+    defaultColDef = reactable::colDef(minWidth = 250),
+    columns = list(
+      Transition_Name = reactable::colDef(
+      # Freeze first column
+      sticky = "left",
+      style = list(borderRight = "1px solid #eee"),
+      headerStyle = list(borderRight = "1px solid #eee"),
+      minWidth = 170),
+      sample_data = reactable::colDef(
+        details = function(index) {
+          filtered_data <- annotated_data[["sample_data"]][index][[1]]
+          htmltools::div(style = "padding: 1rem",
+                         reactable::reactable(
+                           data = filtered_data[1:10,],
+                           defaultPageSize = 5,
+                           defaultColDef = reactable::colDef(minWidth = 250),
+                           columns = list(Injection_Sequence = reactable::colDef(minWidth = 150)),
+                           outlined = TRUE,
+                           highlight = TRUE)
+                       )}),
+      dilution_data = reactable::colDef(
+        details = function(index) {
+          filtered_data <- annotated_data[["dilution_data"]][index][[1]]
+          htmltools::div(style = "padding: 1rem",
+                         reactable::reactable(
+                           data = filtered_data[1:5,],
+                           defaultPageSize = 5,
+                           defaultColDef = reactable::colDef(minWidth = 250),
+                           columns = list(Sample_Name = reactable::colDef(minWidth = 150)),
+                           outlined = TRUE,
+                           highlight = TRUE)
+                       )})
+      )
+    )
+
+```
+
+# Calculate Transition Statistics
+
+We now proceed to calculate some statistical summary for each transition using the nested `dilution_data` and `sample_data`.
+
+## Calculate RQC/Dilution Statistics
+
+The following statistics are calculated from `dilution_data`.
+
+| Column Name       | Column Description                           |
+|-------------------|----------------------------------------------|
+| r_corr            | Pearson Correlation $R$ value.               |
+| r2_linear         | Linear Regression $R^2$ Value.               |
+| r2_linear\_\<=0.8 | Set to TRUE if `r2_linear` is less than 0.8. |
+
+The relevant functions to do these calculations are as follows
+
+```{r dilution summary functions}
+#| code-fold: true
+
+#' @title Create Linear Model
+#' @description A wrapper to create a linear model from dilution data
+#' @param dilution_data A data frame or tibble containing dilution data
+#' @param conc_var Column name in `dilution_data` to indicate concentration
+#' @param signal_var Column name in `dilution_data` to indicate signal
+#' @return A linear model object from `stats:lm()` with formula
+#' `signal_var ~ conc_var` from data `diltuion_data`
+#' @examples
+#' dilution_percent <- c(10, 20, 40, 60, 80, 100)
+#' area <- c(22561, 31178, 39981, 48390, 52171, 53410)
+#' dilution_data <- data.frame(Dilution_Percent = dilution_percent, Area = area)
+#' linear_model <- create_linear_model(dilution_data,
+#'                                     "Dilution_Percent",
+#'                                     "Area")
+#' linear_model
+#' @rdname create_linear_model
+#' @export
+create_linear_model <- function(dilution_data, conc_var, signal_var) {
+
+  conc_var <- paste0("`",conc_var,"`")
+  signal_var <- paste0("`",signal_var,"`")
+
+  # Create the formula
+  linear_formula <- stats::as.formula(paste(signal_var, "~",
+                                            paste(conc_var, collapse = " + ")
+  )
+  )
+
+  # Create the linear model on dilution data
+  linear_model <- stats::lm(linear_formula, data = dilution_data)
+
+  return(linear_model)
+
+}
+
+#' @title Create Quadratic Model
+#' @description A wrapper to create a quadratic model for dilution data
+#' @param dilution_data A data frame or tibble containing dilution data
+#' @param conc_var Column name in `dilution_data` to indicate concentration
+#' @param signal_var Column name in `dilution_data` to indicate signal
+#' @return A linear model object from `stats:lm()` with formula
+#' `signal_var ~ conc_var + I(conc_var * conc_var)`
+#' from data `diltuion_data`
+#' @examples
+#' dilution_percent <- c(10, 20, 40, 60, 80, 100)
+#' area <- c(22561, 31178, 39981, 48390, 52171, 53410)
+#' dilution_data <- data.frame(Dilution_Percent = dilution_percent, Area = area)
+#' quad_model <- create_quad_model(dilution_data,
+#'                                 "Dilution_Percent",
+#'                                 "Area")
+#' quad_model
+#' @rdname create_quad_model
+#' @export
+create_quad_model <- function(dilution_data, conc_var, signal_var) {
+
+  conc_var <- paste0("`",conc_var,"`")
+  signal_var <- paste0("`",signal_var,"`")
+
+  # Create the formula
+  quad_formula <- stats::as.formula(paste(signal_var, "~",
+                                          paste(conc_var, "+",
+                                                paste0("I(", conc_var, " * ",
+                                                       conc_var, ")")
+                                          )
+  )
+  )
+
+  # Create the quadratic model on dilution data
+  quad_model <- stats::lm(quad_formula, data = dilution_data)
+
+  return(quad_model)
+
+}
+
+#' @title Calculate Linear Model's Goodness Of Fit
+#' @description Calculate the Goodness of Fit of the Dilution Linear Model
+#' @param dilution_data A data frame or tibble containing dilution data
+#' @param conc_var Column name in `dilution_data` to indicate concentration
+#' @param signal_var Column name in `dilution_data` to indicate signal
+#' @return A tibble containing the Goodness of Fit measures of the linear model
+#' The Goodness of Fit measures are the Pearson correlation coefficient (R) and
+#' the R^2
+#' @details The function will return a tibble with NA values
+#' if the number of dilution points is less than or equal to three
+#' @examples
+#' dilution_percent <- c(10, 20, 40, 60, 80, 100)
+#' area <- c(22561, 31178, 39981, 48390, 52171, 53410)
+#' dilution_data <- data.frame(Dilution_Percent = dilution_percent, Area = area)
+#' dil_linear_gof <- calculate_gof_linear(dilution_data,
+#'                                        "Dilution_Percent", "Area")
+#' dil_linear_gof
+#' @rdname calculate_gof_linear
+#' @export
+calculate_gof_linear <- function(dilution_data, conc_var, signal_var) {
+
+  dil_linear_gof <- tibble::tibble(r_corr = NA,
+                                   r2_linear = NA)
+
+  if (is.null(nrow(dilution_data))) {
+    return(dil_linear_gof)
+  }
+
+  # Drop rows whose value of signal_var is NA
+  dilution_data <- dilution_data |>
+    tidyr::drop_na(.data[[signal_var]])
+
+  # Return NA for too little points
+  # Horizontal, Vertical line or single point
+  if (nrow(dilution_data) <= 2) {
+    return(dil_linear_gof)
+  }
+  if (stats::sd(dilution_data[[conc_var]]) == 0) {
+    return(dil_linear_gof)
+  }
+  if (stats::sd(dilution_data[[signal_var]]) == 0) {
+    return(dil_linear_gof)
+  }
+
+  # Get the correlation results
+  cor_result <- broom::tidy(stats::cor.test(dilution_data[[signal_var]],
+                                            dilution_data[[conc_var]],
+                                            method = "pearson"))
+  r_corr <- round(cor_result$estimate, digits = 6)
+
+  # Create the linear model on dilution data
+  linear_model <- create_linear_model(dilution_data, conc_var, signal_var)
+
+  # Get GOF for each model
+  linear_gof <- broom::glance(linear_model)
+
+  # Get R2
+  r2_linear <- round(linear_gof$r.squared, digits = 6)
+
+  dil_linear_gof <- tibble::tibble(r_corr = r_corr,
+                                   r2_linear = r2_linear)
+
+  return(dil_linear_gof)
+
+}
+
+#' @title Summarise Dilution Curve Data
+#' @description Get the summary statistics of the dilution data
+#' for one group or batch
+#' @param dilution_data A data frame or tibble containing dilution data
+#' @param conc_var Column name in `dilution_data` to indicate concentration (x-axis)
+#' @param signal_var Column name in `dilution_data` to indicate signal (y-axis)
+#' @return A tibble containing the Goodness of Fit measures of the linear model
+#' The Goodness of Fit measures are the Pearson correlation coefficient (R) and R^2
+get_dilution_summary <- function(dilution_data, 
+                                 conc_var, 
+                                 signal_var) {
+  
+  dil_linear_gof <- calculate_gof_linear(dilution_data,
+                                         conc_var, signal_var)
+  
+  dilution_summary <- dil_linear_gof
+  
+  return(dilution_summary)
+  
+}
+
+```
+
+Here are the codes for our workflow.
+
+```{r calculate dilution statistics}
+
+summary_data <- annotated_data |> 
+  dplyr::mutate(
+    dilution_summary = purrr::map(.x = .data[["dilution_data"]], 
+                                .f = get_dilution_summary,
+                                conc_var = "Relative_Sample_Amount_[%]",
+                                signal_var = "Area")
+  ) |>
+  tidyr::unnest(.data$dilution_summary) |> 
+  dplyr::mutate(
+    `r2_linear_<=0.8` = dplyr::case_when(
+      .data[["r2_linear"]] <= 0.8 ~ "TRUE",
+      .data[["r2_linear"]] > 0.8 ~ "FALSE",
+      TRUE ~ "TRUE"
+    )
+  ) 
+
+```
+
+Here is a preview of the first five rows of the `summary_data`.
+
+```{r preview dilution statistics}
+#| code-fold: true
+
+summary_data[1:5,] |>
+  reactable::reactable(
+    defaultColDef = reactable::colDef(minWidth = 250),
+    columns = list(
+      Transition_Name = reactable::colDef(
+      # Freeze first column
+      sticky = "left",
+      style = list(borderRight = "1px solid #eee"),
+      headerStyle = list(borderRight = "1px solid #eee"),
+      minWidth = 170),
+      sample_data = reactable::colDef(
+        details = function(index) {
+          filtered_data <- annotated_data[["sample_data"]][index][[1]]
+          htmltools::div(style = "padding: 1rem",
+                         reactable::reactable(
+                           data = filtered_data[1:10,],
+                           defaultPageSize = 5,
+                           defaultColDef = reactable::colDef(minWidth = 250),
+                           columns = list(Sample_Name = reactable::colDef(minWidth = 150)),
+                           outlined = TRUE,
+                           highlight = TRUE)
+                       )}),
+      dilution_data = reactable::colDef(
+        details = function(index) {
+          filtered_data <- annotated_data[["dilution_data"]][index][[1]]
+          htmltools::div(style = "padding: 1rem",
+                         reactable::reactable(
+                           data = filtered_data[1:5,],
+                           defaultPageSize = 5,
+                           defaultColDef = reactable::colDef(minWidth = 250),
+                           columns = list(Sample_Name = reactable::colDef(minWidth = 150)),
+                           outlined = TRUE,
+                           highlight = TRUE)
+                       )})
+      )
+    )
+
+
+```
+
+## Calculate QC Samples Statistics
+
+The following statistics are calculated from `sample_data`.
+
+| Column Name              | Column Description                                                                                                                                                                                     |
+|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| bqc_mean                 | Mean signal from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                                            |
+| bqc_median               | Median signal from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                                          |
+| bqc_sd                   | Standard deviation of signal from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                           |
+| bqc_mad                  | Median absolute deviation of signal from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                    |
+| bqc_cv\_%                | Coefficient of variation of signal in % from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                |
+| bqc_cv_robust\_%         | Robust coefficient of variation of signal in % from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                         |
+| tqc_mean                 | Mean signal from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                    |
+| tqc_median               | Median signal from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                  |
+| tqc_sd                   | Standard deviation of signal from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                   |
+| tqc_mad                  | Median absolute deviation of signal techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                 |
+| tqc_cv\_%                | Coefficient of variation of signal in % from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].        |
+| tqc_cv_robust\_%         | Robust coefficient of variation in % of signal from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018]. |
+| spl_mean                 | Mean signal from experimental (unknown) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                                     |
+| spl_median               | Median signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                                           |
+| spl_sd                   | Standard deviation of signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                            |
+| spl_mad                  | Median absolute deviation of signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                     |
+| spl_cv\_%                | Coefficient of variation in % of signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                 |
+| spl_cv_robust\_%         | Robust coefficient of variation in % of signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                          |
+| pblk_median              | Median signal from processed blank samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                                          |
+| pblk_to_tqc_ratio\_%     | Ratio of median signal from processed blank sample to median signal from techincal QC (or pooled lipid extracts) samples.                                                                              |
+| bqc_cv\_\>20%            | Set to TRUE if `bqc_cv` is greater than 20%.                                                                                                                                                           |
+| tqc_cv\_\>20%            | Set to TRUE if `tqc_cv` is greater than 20%.                                                                                                                                                           |
+| pblk_to_tqc_ratio\_\>10% | Set to TRUE if `pblk_to_tqc_ratio_%` is greater than 10%.                                                                                                                                              |
+
+The relevant functions to do these calculations are as follows.
+
+```{r sample summary functions}
+#| code-fold: true
+
+#' Function used to calculate statistics summary (RSD,Signal to Blank Ratio) of a given input numeric vector
+#'
+#' @param lipid_data_vector Input lipid data numeric vector
+#' @param prepend_string Input characters to prepend to the result table column name
+#'
+#' @return Output statistical summary table (RSD,Signal to Blank Ratio)
+#' @export
+get_sample_description <- function(lipid_data_vector, prepend_string) {
+
+  description_table <- tibble::tibble(
+    mean = lipid_data_vector |> mean(na.rm=TRUE),
+    median = lipid_data_vector |> stats::median(na.rm=TRUE),
+    sd = lipid_data_vector |> stats::sd(na.rm=TRUE),
+    mad = lipid_data_vector |> stats::mad(na.rm=TRUE,constant = 1),
+  ) |>
+    dplyr::mutate(
+      `cv_%` = .data$sd/.data$mean * 100,
+      `cv_robust_%` = (1.4826 * .data$mad)/.data$median * 100
+  )
+  
+  description_table <- description_table |>
+      dplyr::rename_all(~paste0(prepend_string,"_",.))
+
+  return(description_table)
+}
+
+#' Function used to calculate QC Sample Types statistics summary (RSD,Signal to Blank Ratio) of a given column name from the input data set
+#'
+#' @param lipid_Data Input lipid data that must contain the columns from `qc_sample_type_var` and `signal_var`
+#' @param qc_sample_type_var Input column name indicating QC sample_type
+#' @param signal_var Input column name to extract from the input lipid data and calculate qc sample type statistics
+#' 
+#' @return Output QC Sample Types statistical summary table (RSD,Signal to Blank Ratio)
+#' @export
+get_qc_sample_summary <- function(lipid_data, 
+                                  qc_sample_type_var, 
+                                  signal_var) {
+  
+  spl_summary <- lipid_data |> 
+    dplyr::filter(.data[[qc_sample_type_var]] == "SPL") |> 
+    dplyr::pull(.data[[signal_var]]) |> 
+    get_sample_description(prepend_string= "spl")
+  
+  bqc_summary <- lipid_data |> 
+    dplyr::filter(.data[[qc_sample_type_var]] == "BQC") |> 
+    dplyr::pull(.data[[signal_var]]) |> 
+    get_sample_description(prepend_string = "bqc")
+  
+  tqc_summary <- lipid_data |> 
+    dplyr::filter(.data[[qc_sample_type_var]] == "TQC") |> 
+    dplyr::pull(.data[[signal_var]]) |> 
+    get_sample_description(prepend_string = "tqc")
+  
+  tqc_median <- lipid_data |> 
+    dplyr::filter(.data[[qc_sample_type_var]] %in% c("TQC")) |> 
+    dplyr::pull(!!signal_var) |> 
+    stats::median(na.rm=TRUE)
+  
+  pblk_median <- lipid_data |> 
+    dplyr::filter(.data[[qc_sample_type_var]] == "PBLK") |> 
+    dplyr::pull(!!signal_var) |> 
+    stats::median(na.rm=TRUE)
+  
+  `pblk_to_tqc_ratio_%` <- pblk_median/tqc_median * 100
+  
+  pblk_summary <- tibble::tibble(
+    pblk_median = pblk_median,
+    `pblk_to_tqc_ratio_%` = `pblk_to_tqc_ratio_%`
+  )
+
+  qc_stat_table <- dplyr::bind_cols(bqc_summary, 
+                                    tqc_summary,
+                                    spl_summary,
+                                    pblk_summary)
+
+  return(qc_stat_table)
+
+}
+
+```
+
+Here are the codes for our workflow.
+
+```{r calculate QC sample statistics}
+
+summary_data <- summary_data |> 
+  dplyr::mutate(
+    sample_summary = purrr::map(.x = .data[["sample_data"]], 
+                                .f = get_qc_sample_summary,
+                                qc_sample_type_var = "QC_Sample_Type",
+                                signal_var = "Area")
+  ) |> 
+  tidyr::unnest(.data$sample_summary) |>
+  dplyr::mutate(
+    `bqc_cv_>20%` = dplyr::case_when(
+      .data[["bqc_cv_%"]] > 20 ~ "TRUE",
+      .data[["bqc_cv_%"]] <= 20 ~ "FALSE",
+      TRUE ~ "TRUE"
+    ),
+    `tqc_cv_>20%` = dplyr::case_when(
+      .data[["tqc_cv_%"]] > 20 ~ "TRUE",
+      .data[["tqc_cv_%"]] <= 20 ~ "FALSE",
+      TRUE ~ "TRUE"
+    ),
+    `pblk_to_tqc_ratio_>10%` = dplyr::case_when(
+      .data[["pblk_to_tqc_ratio_%"]] > 10 ~ "TRUE",
+      .data[["pblk_to_tqc_ratio_%"]] <= 20 ~ "FALSE",
+      TRUE ~ "TRUE"
+    )
+  )
+
+```
+
+Here is a preview of the first five rows of the `summary_data`.
+
+```{r preview QC sample statistics}
+#| code-fold: true
+
+summary_data[1:5,] |>
+  reactable::reactable(
+    defaultColDef = reactable::colDef(minWidth = 250),
+    columns = list(
+      Transition_Name = reactable::colDef(
+      # Freeze first column
+      sticky = "left",
+      style = list(borderRight = "1px solid #eee"),
+      headerStyle = list(borderRight = "1px solid #eee"),
+      minWidth = 170),
+      sample_data = reactable::colDef(
+        details = function(index) {
+          filtered_data <- annotated_data[["sample_data"]][index][[1]]
+          htmltools::div(style = "padding: 1rem",
+                         reactable::reactable(
+                           data = filtered_data[1:10,],
+                           defaultPageSize = 5,
+                           defaultColDef = reactable::colDef(minWidth = 250),
+                           columns = list(Sample_Name = reactable::colDef(minWidth = 150)),
+                           outlined = TRUE,
+                           highlight = TRUE)
+                       )}),
+      dilution_data = reactable::colDef(
+        details = function(index) {
+          filtered_data <- annotated_data[["dilution_data"]][index][[1]]
+          htmltools::div(style = "padding: 1rem",
+                         reactable::reactable(
+                           data = filtered_data[1:5,],
+                           defaultPageSize = 5,
+                           defaultColDef = reactable::colDef(minWidth = 250),
+                           columns = list(Sample_Name = reactable::colDef(minWidth = 150)),
+                           outlined = TRUE,
+                           highlight = TRUE)
+                       )})
+      )
+    )
+
+
+```
+
+# Plotting Palette
+
+In this section, we create the palette for our dilution plots as well as our injection sequence plots. The [Okato-Ito palette](https://jfly.uni-koeln.de/color/index.html) [@OkabeIto2008] is used.
+
+The relevant utility functions to do this are as follows.
+
+```{r palatte utility functions, warning=FALSE, message=FALSE}
+#| code-fold: true
+
+#' @title Create Cyclic Character Sequence
+#' @description Create cyclic character sequence
+#' @param group_name A character vector as input
+#' @param output_length The length of the output sequence
+#' @return A cyclic character sequence with length `output_length`
+#' @details Taken from
+#' https://community.rstudio.com/t/fill-in-a-sequence-of-letters-based-on-a-given-order/88823/3
+#' @examples
+#' group_name <- c("red", "green", "blue")
+#' create_char_seq(group_name, output_length = 2)
+#' create_char_seq(group_name, output_length = 5)
+#'
+#' @rdname create_char_seq
+#' @export
+create_char_seq <- function(group_name, output_length) {
+
+  # whole integer division
+  i <- output_length %/% length(group_name)
+
+  # remainder
+  r <- output_length %% length(group_name)
+
+  # Set the number of cycles needed
+  if (r > 0) {
+    t <- i + 1
+  } else {
+    t <- i
+  }
+
+  # Create the set and cut by the output_length
+  set <- rep(group_name, t)
+  output <- set[1:output_length]
+
+  return(output)
+
+}
+```
+
+::: panel-tabset
+## Dilution Plot Palette
+
+We create a colour for each dilution batch name. The palette for the dilution plot are created as such.
+
+```{r create dilution pal}
+
+# Get the dilution batch name from dilution_annot
+dilution_batch_name <- dilution_annot |> 
+  dplyr::pull(.data[["Dilution_Batch_Name"]]) |> 
+  unique() |> 
+  as.character()
+
+# Create palette for each dilution batch for plotting
+dilution_pal <- c("#377eb8") |>  
+  create_char_seq(output_length = length(dilution_batch_name)) |> 
+  stats::setNames(dilution_batch_name)
+
+scales::show_col(dilution_pal)
+```
+
+## Injection Sequence Plot Palette
+
+We create a colour for each QC sample type. The palette for the injection sequence plot are created as such.
+
+```{r create qc sample type pal, warning=FALSE, message=FALSE}
+
+qc_sample_type <- c("SPL","TQC", "BQC","NIST", 
+                    "LTR", "PBLK","RQC")
+
+# Create palette for each qc sample type for plotting
+qc_sample_type_pal <- c("#F0E442", "#0072B2", "#D55E00","#009E73",
+                        "#56B4E9", "#CC79A7", "#E69F00") |>  
+  create_char_seq(output_length = length(qc_sample_type)) |> 
+  stats::setNames(qc_sample_type)
+
+scales::show_col(qc_sample_type_pal)
+```
+:::
+
+# Plot Dilution Curves
+
+With the palette created, we will create a dilution plot for each transition.
+
+The relevant functions to do this plot are as follows.
+
+```{r dilution plot functions}
+#| code-fold: true
+
+plot_dil_curve_plotly <- function(dilution_data,
+                                  dilution_title,
+                                  dilution_pal,
+                                  sample_name_var = "Sample_Name",
+                                  dil_batch_var = "Dilution_Batch_Name",
+                                  conc_var = "Dilution_Percent",
+                                  conc_var_units = "%",
+                                  conc_var_interval = 50,
+                                  signal_var = "Area",
+                                  x_axis_title = "",
+                                  y_axis_title = "",
+                                  y_axis_rangemode = "normal",
+                                  lin_reg_name = "lin reg",
+                                  quad_reg_name = "quad reg",
+                                  show_legend = TRUE,
+                                  show_y_axis_title = TRUE,
+                                  annotation_var = c()) {
+  
+  # Drop rows whose value of signal_var is NA
+  dilution_data <- dilution_data |>
+    tidyr::drop_na(.data[[signal_var]])
+  
+  # For the hover text
+  text_input <- glue::glue(
+    "<b>{dilution_data[[sample_name_var]]}</b>\\
+     <br>{conc_var}: {dilution_data[[conc_var]]}\\
+     <br>{signal_var}: {format(dilution_data[[signal_var]], big.mark = ",", nsmall = 1)}"
+  )
+
+  for(things in annotation_var) {
+    text_input <- glue::glue("{text_input}\\
+                              <br>{things}: {dilution_data[[things]]}")
+  }
+  
+  # Convert the column that holds the dilution_batch_var
+  # to factors
+  dilution_data[[dil_batch_var]] <- dilution_data[[dil_batch_var]] |>
+    # To handle the case that batches are named "1", "2", "3"
+    as.character() |>
+    # Factor batch based on the order of the palette colours
+    # So that the order will match
+    factor(levels = names(dilution_pal))
+  
+  # Create the dots in the dilution plot
+  p <- plotly::plot_ly() |>
+    plotly::add_trace(data = dilution_data,
+                      x = dilution_data[[conc_var]],
+                      y = dilution_data[[signal_var]],
+                      type = "scatter", mode = "markers",
+                      marker = list(size = 10, opacity = 1,
+                                    line = list(color = "black", width = 1.5)),
+                      name = dilution_data[[dil_batch_var]],
+                      color = dilution_data[[dil_batch_var]],
+                      # See https://github.com/plotly/plotly.R/issues/1985
+                      colors = unname(dilution_pal),
+                      hoverinfo = "text",
+                      text = dilution_data[[sample_name_var]],
+                      hovertemplate = text_input,
+                      legendgroup = "group1",
+                      showlegend = show_legend,
+                      inherit = FALSE)
+  
+  if(nrow(dilution_data) > 3) {
+
+     # When we need to plot a horizontal line
+     if(stats::sd(dilution_data[[signal_var]]) == 0) {
+
+      min_x <- min(dilution_data[[conc_var]], na.rm = TRUE)
+      max_x <- max(dilution_data[[conc_var]], na.rm = TRUE)
+      cont_y <- unique(dilution_data[[signal_var]])
+
+      p <- p |>
+        plotly::add_segments(x = min_x, xend = max_x,
+                             y = cont_y, yend = cont_y,
+                             name = lin_reg_name,
+                             line = list(color = "black", width = 1),
+                             legendgroup = "group2",
+                             showlegend = show_legend,
+                             inherit = FALSE)
+
+     } else if (stats::sd(dilution_data[[conc_var]]) == 0) {
+      # When we need to plot a vertical line
+      min_y <- min(dilution_data[[signal_var]], na.rm = TRUE)
+      max_y <- max(dilution_data[[signal_var]], na.rm = TRUE)
+      cont_x <- unique(dilution_data[[conc_var]])
+
+      p <- p |>
+        plotly::add_segments(x = cont_x, xend = cont_x,
+                             y = min_y, yend = max_y,
+                             name = lin_reg_name,
+                             line = list(color = "black", width = 1),
+                             legendgroup = "group2",
+                             showlegend = show_legend,
+                             inherit = FALSE)
+
+     } else {
+      # Plot the curves
+
+      # Model the data
+      linear_model <- create_linear_model(dilution_data, conc_var, signal_var)
+      quad_model <- create_quad_model(dilution_data, conc_var, signal_var)
+
+      dilution <- seq(min(dilution_data[[conc_var]]),
+                      max(dilution_data[[conc_var]]),
+                      length.out = 15)
+
+      # See https://github.com/plotly/plotly.R/issues/1985
+
+      linear_prediction <- linear_model |>
+        stats::predict(tibble::tibble(!!conc_var := dilution)) |>
+        unname()
+
+      quad_prediction <- quad_model |>
+        stats::predict(tibble::tibble(!!conc_var := dilution)) |>
+        unname()
+
+      # Create the linear and quadratic curve in the dilution plot
+      p <- p |>
+        plotly::add_trace(data = dilution_data, x = dilution,
+                          y = linear_prediction,
+                          type = "scatter", mode = "lines", name = lin_reg_name,
+                          line = list(color = "black", width = 1),
+                          legendgroup = "group2",
+                          showlegend = show_legend,
+                          inherit = FALSE) |>
+        plotly::add_trace(data = dilution_data, x = dilution,
+                          y = quad_prediction,
+                          type = "scatter", mode = "lines", name = quad_reg_name,
+                          line = list(color = "red", width = 1, opacity = 0.25),
+                          legendgroup = "group3",
+                          showlegend = show_legend,
+                          inherit = FALSE)
+     }
+  }
+  
+  # Create x axis title
+  # If conc_var_units is empty, do not add brackets
+  if(x_axis_title != "") {
+    x_title <- x_axis_title
+  } else {
+    x_title <- conc_var
+  }
+
+  if(conc_var_units != "") {
+    x_title <- paste0(x_title, " (",  conc_var_units, ")")
+  }
+
+  # Create y axis title
+  if(y_axis_title != ""){
+    y_title <- y_axis_title
+  } else {
+    y_title <- signal_var
+  }
+
+  # Create the layout to be the same as ggplot2
+  p <- p |>
+    plotly::layout(title = list(text = dilution_title,
+                                x = 0.1) ,
+                   xaxis = list(title = x_title,
+                                titlefont = list(size = 10),
+                                gridcolor = "rgb(255,255,255)",
+                                showgrid = TRUE,
+                                showline = FALSE,
+                                showticklabels = TRUE,
+                                tickcolor = "rgb(127,127,127)",
+                                ticks = "outside",
+                                zeroline = FALSE,
+                                tickfont = list(size = 10),
+                                tick0 = 0,
+                                dtick = conc_var_interval,
+                                showspikes = TRUE,
+                                spikemode = "toaxis+marker",
+                                spikesnap = "data"),
+                   yaxis = list(title = NA,
+                                autorange = TRUE,
+                                fixedrange = FALSE,
+                                rangemode = y_axis_rangemode,
+                                titlefont = list(size = 10),
+                                gridcolor = "rgb(255,255,255)",
+                                showgrid = TRUE,
+                                showline = FALSE,
+                                showticklabels = TRUE,
+                                tickcolor = "rgb(127,127,127)",
+                                ticks = "outside",
+                                zeroline = FALSE,
+                                tickfont = list(size = 10),
+                                exponentformat = "e",
+                                showspikes = TRUE,
+                                spikemode = "toaxis+marker",
+                                spikesnap = "data"),
+                   hovermode = "x",
+                   legend = list(orientation = "v",
+                                 font = list(size = 10)),
+                   paper_bgcolor = "rgb(255,255,255)",
+                   plot_bgcolor = "rgb(229,229,229)"
+                   #showlegend = show_legend
+    )
+
+  # Add the y axis title
+  if(isTRUE(show_y_axis_title)) {
+
+    p <- p |>
+      plotly::add_annotations(
+        x=0,
+        y=1,
+        xref = "paper",
+        yref = "paper",
+        xanchor = "left",
+        yanchor = "bottom",
+        text = y_title,
+        showarrow = FALSE
+      )
+  }
+
+  return(p)
+  
+}
+
+```
+
+Here is the code that plots the dilution curve for each transition. A new column `dilution_panel` is created to contain such a plot. Both nested data `dilution_data` and `sample_data` are removed in the process.
+
+```{r plotting dilution}
+
+dilution_plot_table <- summary_data |> 
+  dplyr::mutate(
+    dilution_panel = trelliscopejs::pmap_plot(
+      list(dilution_data = .data[["dilution_data"]]),
+      plot_dil_curve_plotly,
+      dilution_title = "",
+      dilution_pal = dilution_pal,
+      sample_name_var = "Sample_Name",
+      dil_batch_var = "Dilution_Batch_Name",
+      conc_var = "Relative_Sample_Amount_[%]",
+      conc_var_units = "%",
+      conc_var_interval = 25,
+      signal_var = "Area",
+      x_axis_title = "Relative Sample Amount",
+      y_axis_title = "Area",
+      y_axis_rangemode = "normal",
+      lin_reg_name = "lin reg",
+      quad_reg_name = "quad reg",
+      show_legend = TRUE,
+      show_y_axis_title = TRUE,
+      annotation_var = c("Dilution_Batch_Name",
+                         "Injection_Sequence",
+                         "Acqusition_Time_Stamp",
+                         "Vial_Position")
+    )
+  ) |> 
+  dplyr::select(-c("dilution_data", "sample_data"))
+
+```
+
+Here is a preview of the dilution plot of first row of the `dilution_plot_table`.
+
+```{r preview dilution plot}
+#| code-fold: true
+
+manipulateWidget::combineWidgets(ncol = 2,
+                                 nrow = 2,
+                                 dilution_plot_table$dilution_panel[[1]],
+                                 dilution_plot_table$dilution_panel[[2]],
+                                 dilution_plot_table$dilution_panel[[3]],
+                                 dilution_plot_table$dilution_panel[[4]])
+```
+
+# Plot Injection Sequence
+
+The injection sequence plot consist of a scatter plot and a raincloud plot.
+
+## Scatter Plot
+
+The relevant function to do the scatter plot is as follows.
+
+```{r plot scatter plot functions}
+#| code-fold: true
+
+plot_scatterplot_plotly <- function(scatterplot_data,
+                                    scatterplot_pal,
+                                    x_axis_var = "Injection_Sequence",
+                                    y_axis_var = "Area",
+                                    sample_name_var = "Sample_Name",
+                                    legend_category_var = "QC_Sample_Type",
+                                    legend_title = "",
+                                    annotation_var = c(),
+                                    lod_val = NA,
+                                    show_y_axis_title = FALSE,
+                                    show_legend = TRUE) {
+  
+  # Drop rows whose value of signal_var is NA
+  scatterplot_data <- scatterplot_data |> 
+    tidyr::drop_na(.data[[y_axis_var]])
+  
+  # For the hover text
+  text_input <- glue::glue(
+    "<b>{scatterplot_data[[sample_name_var]]}</b>\\
+     <br>{x_axis_var}: {scatterplot_data[[x_axis_var]]}\\
+     <br>{y_axis_var}: {format(scatterplot_data[[y_axis_var]], big.mark = ",", nsmall = 1)}"
+  )
+  
+  for(things in annotation_var) {
+    text_input <- glue::glue("{text_input}\\
+                              <br>{things}: {scatterplot_data[[things]]}")
+  }
+  
+  # Convert the column that holds the legend_category_var
+  # to factors
+  scatterplot_data[[legend_category_var]] <- scatterplot_data[[legend_category_var]] |>
+    # To handle the case that batches are named "1", "2", "3"
+    as.character() |>
+    # Factor batch based on the order of the palette colours
+    # So that the order will match
+    factor(levels = names(scatterplot_pal))
+  
+  scatter <- plotly::plot_ly() |>
+    plotly::add_trace(data = scatterplot_data,
+                      x = scatterplot_data[[x_axis_var]], 
+                      y = scatterplot_data[[y_axis_var]],
+                      type = "scattergl", 
+                      mode = "markers",
+                      visible = TRUE,
+                      marker = list(
+                        size = 8 ,
+                        opacity = 1,
+                        line = list(color = "black", width = 1.5)
+                      ),
+                      name = scatterplot_data[[legend_category_var]],
+                      color = scatterplot_data[[legend_category_var]],
+                      colors = unname(scatterplot_pal),
+                      legendgroup = scatterplot_data[[legend_category_var]],
+                      showlegend = show_legend,
+                      hoverinfo = "text",
+                      text = text_input,
+                      inherit = FALSE) |>
+    # Create the layout to be the same as ggplot2
+    plotly::layout(xaxis = list(title = x_axis_var, 
+                                titlefont = list(size = 10),
+                                tickfont = list(size = 10), 
+                                tickangle = 0,
+                                gridcolor = "rgb(255,255,255)",
+                                showgrid = TRUE,
+                                showticklabels = TRUE,
+                                tickcolor = "rgb(127,127,127)",
+                                ticks = 'outside',
+                                zeroline = FALSE,
+                                showspikes = TRUE, 
+                                spikemode = "toaxis+marker",
+                                spikesnap = "data",
+                                rangeslider = list(thickness = 0.05),
+                                autorange = TRUE, 
+                                fixedrange = FALSE),
+                   yaxis = list(title = "",
+                                titlefont = list(size = 10),
+                                tickfont = list(size = 10),
+                                gridcolor = "rgb(255,255,255)",
+                                showgrid = TRUE,
+                                showline = FALSE,
+                                showticklabels = TRUE,
+                                tickcolor = "rgb(127,127,127)",
+                                ticks = "outside",
+                                zeroline = FALSE,
+                                showspikes = TRUE,
+                                spikemode = "toaxis+marker",
+                                spikesnap = "data",
+                                autorange = TRUE,
+                                fixedrange = FALSE),
+                   hovermode = "closest",
+                   legend = list(title = list(text = legend_title),
+                                 orientation = 'v', 
+                                 font = list(size = 10)),
+                   paper_bgcolor = "rgb(255,255,255)",
+                   plot_bgcolor = "rgb(229,229,229)"
+                   )
+  
+  # Add the LOD line
+  if(!isTRUE(is.na(lod_val))) {
+    
+    scatter <- scatter |> 
+      plotly::add_trace(data = scatterplot_data,
+                        x = scatterplot_data[[x_axis_var]],
+                        y = lod_val, yend = lod_val,
+                        type = "scattergl" ,
+                        mode = "lines",
+                        name = "LOD Line",
+                        line = list(color = "red",
+                                    width = 2,
+                                    dash = "solid"),
+                        inherit = FALSE)
+  }
+    
+  # Add the y axis title
+  if(isTRUE(show_y_axis_title)) {
+    scatter <- scatter |>
+      plotly::add_annotations(
+        x = 0,
+        y= 1,
+        xref = "paper",
+        yref = "paper",
+        yanchor = "bottom",
+        text = y_axis_var,
+        showarrow = FALSE
+      )
+  }
+  
+  return(scatter)
+  
+}
+
+```
+
+The first step is to create a scatter plot (Area vs Injection Sequence) for each transition. A new column `scatterplot_panel` is created to contain such a plot.
+
+```{r plotting scatter plot}
+
+scatterplot_table <- summary_data |>  
+  dplyr::mutate(
+    scatterplot_panel = trelliscopejs::pmap_plot(
+      list(scatterplot_data = .data[["sample_data"]]),
+      plot_scatterplot_plotly,
+      scatterplot_pal = qc_sample_type_pal,
+      x_axis_var = "Injection_Sequence",
+      y_axis_var = "Area",
+      sample_name_var = "Sample_Name",
+      legend_category_var = "QC_Sample_Type",
+      legend_title = "<b>QC Sample Type</b>",
+      annotation_var = c("Sample_Name",
+                         "Injection_Sequence",
+                         "Acqusition_Time_Stamp",
+                         "Vial_Position",
+                         "QC_Sample_Type"),
+      lod_val = 1500,
+      show_y_axis_title = TRUE,
+      show_legend = TRUE
+      )
+  ) 
+
+
+```
+
+Here is a preview of the scatter plot of first row of the `scatterplot_table`.
+
+```{r preview scatter plot}
+#| code-fold: true
+ 
+scatterplot_table$scatterplot_panel[[1]]
+```
+
+## Raincloud Plot
+
+The relevant utility function is as follows.
+
+```{r raincloud plot utility functions}
+#| code-fold: true
+
+remove_rqc <- function(input_data) {
+  
+  input_data <- input_data |>
+      dplyr::filter(.data[["QC_Sample_Type"]] != "RQC")
+  
+  return(input_data)
+  
+}
+```
+
+The relevant function to do the raincloud plot is as follows.
+
+```{r plot raincloud plot functions}
+#| code-fold: true
+
+plot_raincloud_plotly <- function(raincloud_data,
+                                  raincloud_pal,
+                                  x_axis_var = "QC_Sample_Type",
+                                  y_axis_var = "Area",
+                                  sample_name_var = "Sample_Name",
+                                  legend_category_var = "QC_Sample_Type",
+                                  legend_title = "",
+                                  annotation_var = c("Injection_Sequence",
+                                                     "Area",
+                                                     "QC_Sample_Type"),
+                                  show_y_axis_title = FALSE,
+                                  show_legend = TRUE) {
+  
+  
+  # Drop rows whose value of signal_var is NA
+  raincloud_data <- raincloud_data |>
+    tidyr::drop_na(.data[[y_axis_var]])
+  
+  # For the hover text
+  text_input <- glue::glue(
+    "<b>{raincloud_data[[sample_name_var]]}</b>\\
+     <br>{x_axis_var}: {raincloud_data[[x_axis_var]]}\\
+     <br>{y_axis_var}: {format(raincloud_data[[y_axis_var]], big.mark = ",", nsmall = 1)}"
+  )
+  
+  for(things in annotation_var) {
+    text_input <- glue::glue("{text_input}\\
+                              <br>{things}: {raincloud_data[[things]]}")
+  }
+  
+  # Convert the column that holds the legend_category_var
+  # to factors
+  raincloud_data[[legend_category_var]] <- raincloud_data[[legend_category_var]] |>
+    # To handle the case that batches are named "1", "2", "3"
+    as.character() |>
+    # Factor batch based on the order of the palette colours
+    # So that the order will match
+    factor(levels = names(raincloud_pal))
+  
+  
+  violin <- plotly::plot_ly() |>
+    plotly::add_trace(data = raincloud_data,
+                      x = raincloud_data[[x_axis_var]],
+                      y = raincloud_data[[y_axis_var]],
+                      type = "violin",
+                      opacity = 1,
+                      #type = 'box',
+                      color = raincloud_data[[legend_category_var]],
+                      colors = unname(raincloud_pal),
+                      legendgroup = raincloud_data[[legend_category_var]],
+                      showlegend = show_legend,
+                      text = text_input,
+                      orientation = "v",
+                      box = list(
+                        visible = TRUE,
+                        width = 1,
+                        line = list(color = "black"),
+                        fillcolor = 'white'
+                      ),
+                      side = "positive",
+                      #boxpoints = "all",
+                      points = "suspectedoutliers",
+                      jitter = 0,
+                      #boxmean = "sd",
+                      meanline = list(visible = TRUE,
+                                      color = "red"),
+                      marker = list(
+                        size = 7 ,
+                        opacity = 1,
+                        #outliercolor = 'rgba(133,231,1,1)',
+                        line = list(color = "black", width = 1.5)
+                      ),
+                      pointpos = -1,
+                      inherit = FALSE) |> 
+    plotly::layout(xaxis = list(title = x_axis_var,
+                                titlefont = list(size = 10),
+                                tickfont = list(size = 10), 
+                                tickangle = 0,
+                                gridcolor = "rgb(255,255,255)",
+                                type = 'category',
+                                showgrid = TRUE,
+                                showline = FALSE,
+                                showticklabels = TRUE,
+                                tickcolor = "rgb(127,127,127)",
+                                ticks = 'outside',
+                                zeroline = FALSE,
+                                tickfont = list(size = 10),
+                                autorange = TRUE, 
+                                fixedrange = FALSE),
+                   yaxis = list(title = "",
+                                titlefont = list(size = 10),
+                                tickfont = list(size = 10),
+                                gridcolor = "rgb(255,255,255)",
+                                showgrid = TRUE,
+                                showline = FALSE,
+                                showticklabels = TRUE,
+                                tickcolor = "rgb(127,127,127)",
+                                ticks = "outside",
+                                zeroline = FALSE,
+                                tickfont = list(size = 10),
+                                autorange = TRUE, 
+                                fixedrange = FALSE),
+                   hovermode = "closest",
+                   legend = list(title = list(text = legend_title),
+                                 orientation = "v", 
+                                 font = list(size = 10)),
+                   paper_bgcolor = "rgb(255,255,255)",
+                   plot_bgcolor = "rgb(229,229,229)"
+                   )
+  
+  if(isTRUE(show_y_axis_title)) {
+    violin <- violin |>
+      plotly::add_annotations(
+        x = 0,
+        y= 1,
+        xref = "paper",
+        yref = "paper",
+        yanchor = "bottom",
+        text = y_axis_var,
+        showarrow = FALSE
+      )
+  }
+  
+  return(violin)
+}
+
+```
+
+The second step is to create a raincloud plot (QC Sample Type (without RQC) vs Injection Sequence) for each transition. A new column called `no_rqc_data` is created from `sample_data` to filter out the RQC samples. The filtered samples are then used to create the plot. A new column `raincloud_panel` is created to contain such a plot.
+
+```{r plotting raincloud plot, warning=FALSE}
+
+raincloud_table <- scatterplot_table |>
+  dplyr::mutate(
+    no_rqc_data = purrr::map(.x = .data[["sample_data"]],
+                             .f = remove_rqc)
+    ) |>  
+  dplyr::mutate(
+    raincloud_panel = trelliscopejs::pmap_plot(
+      list(raincloud_data = .data$no_rqc_data),
+      plot_raincloud_plotly,
+      raincloud_pal = qc_sample_type_pal,
+      x_axis_var = "QC_Sample_Type",
+      y_axis_var = "Area",
+      sample_name_var = "Sample_Name",
+      legend_category_var = "QC_Sample_Type",
+      legend_title = "<b>QC Sample Type</b>",
+      annotation_var = c("Sample_Name",
+                         "Injection_Sequence",
+                         "Acqusition_Time_Stamp",
+                         "Vial_Position"),
+      show_y_axis_title = FALSE,
+      show_legend = FALSE
+    )
+  )
+
+```
+
+Here is a preview of the raincloud plot of first row of the `raincloud_table`.
+
+```{r preview raincloud plot}
+#| code-fold: true
+ 
+raincloud_table$raincloud_panel[[1]]
+```
+
+## Injection Sequence Plot
+
+The relevant utility functions are as follows.
+
+```{r injection sequence plot utility functions}
+#| code-fold: true
+
+arrange_plots <- function(scatterplot_panel, raincloud_panel) {
+  
+  combined_plots <- plotly::subplot(scatterplot_panel,
+                                    raincloud_panel,
+                                    widths = c(0.6, 0.4),
+                                    margin = 0.01,
+                                    shareX = TRUE,
+                                    shareY = TRUE
+  )
+  return(combined_plots)
+  
+}
+
+```
+
+The last step is to combine the two plots together. `dilution_data`, `sample_data`, `no_rqc_data`, `scatterplot_panel` and `raincloud_panel` are removed in the process.
+
+```{r plotting injection sequence plot, warning=FALSE}
+
+injection_sequence_table <- raincloud_table |> 
+  dplyr::mutate(
+    panel = trelliscopejs::pmap_plot(
+      .l = list(
+        scatterplot_panel = .data$scatterplot_panel,
+        raincloud_panel = .data$raincloud_panel
+      ),
+      .f = arrange_plots
+  )) |>  
+  dplyr::select(-c("dilution_data","sample_data","no_rqc_data",
+                   "scatterplot_panel", "raincloud_panel"))
+
+```
+
+Here is a preview of the injection sequence plot of first row of the `injection_sequence_table`.
+
+```{r preview injection sequence plot}
+#| code-fold: true
+ 
+injection_sequence_table$panel[[1]]
+```
+
+# Cognostics
+
+To output these interactive plots as a trellis plot in html, we need to convert our current tibble and `dilution_plot_table` and `injection_sequence_table` into a cognostics dataframe.
+
+The cognostics dataframe consist of three components
+
+1. A group of columns known as conditioning variables. They will form the unique id of the trellis plot. As such, each row of these columns must be unique. In our example, the column used is `Transition_Name`
+2. One column that holds the images to display each plot in the trellis. This column is known as the panel variable. We just created this column using `trelliscopejs::pmap_plot` earlier.
+3. The other columns will be grouped as general cognostics columns.
+
+## Cognostics Conversion Functions
+
+The relevant functions to convert all columns, except the panel variable, to cognostics objects are as follows.
+
+```{r cognostics functions}
+#| code-fold: true
+
+#' @title Validate Cognostics Data
+#' @description Validate Cognostics Data
+#' @param cog_df A data frame or tibble that contains cognostics information
+#' @param needed_column A vector consisting of needed column names that
+#' must be found in `cog_df`,
+#' Default:
+#' `c("col_name_vec", "desc_vec", "type_vec")`
+#' @return An error if the things in `needed_column`
+#' is not found in the Cognostics Data
+#' @examples
+#' # Create Cognostics Dataframe
+#' col_name_vec <- c("Transition_Name", "Dilution_Batch_Name")
+#'
+#' desc_vec <- c("Transition_Name", "Dilution_Batch_Name")
+#'
+#' type_vec <- c("factor","factor")
+#'
+#' cog_df <- data.frame(col_name_vec = col_name_vec,
+#'                      desc_vec = desc_vec,
+#'                      type_vec = type_vec)
+#'
+#' validate_cog_df(cog_df)
+#'
+#' @rdname validate_cog_df
+#' @export
+validate_cog_df <- function(cog_df,
+                            needed_column = c("col_name_vec",
+                                              "desc_vec",
+                                              "type_vec")) {
+
+
+  # Check if things in needed_column are in cog_df
+  assertable::assert_colnames(cog_df, needed_column,
+                              only_colnames = FALSE, quiet = TRUE)
+
+
+}
+
+#' @title Update Cognostics Manually
+#' @description Update cognostics on `summary_table` based on
+#' the cognostics parameters given by `cog_df`. We assume
+#' `cog_df` is created manually
+#' @param summary_table The summary data frame or tibble generated
+#' by function [summarise_dilution_data()]
+#' @param cog_df  A data frame or tibble output
+#' from the function [create_default_cog_df()] or created manually
+#' @param col_name_vec Column name in `cog_df` to indicate the columns
+#' in `summary_table` that needs to be converted to a cognostics,
+#' Default: 'col_name_vec'
+#' @param desc_vec Column name in `cog_df` to indicate the description
+#' for each cognostics as define in `trelliscopejs::cog`,
+#' Default: 'desc_vec'
+#' @param type_vec Column name in `cog_df` to indicate the type
+#' of each cognostics as define in `trelliscopejs::cog`,
+#' Default: 'type_vec'
+#' @return `summary_table` with some columns converted
+#' to type cog as defined in `trelliscopejs::cog`
+#' @details
+#' More details in `trelliscopejs::cog` can be found in
+#' <https://rdrr.io/cran/trelliscopejs/man/cog.html>
+#'
+#' @rdname update_cog_manual
+#' @export
+update_cog_manual <- function(summary_table, cog_df,
+                              col_name_vec = "col_name_vec",
+                              desc_vec = "desc_vec",
+                              type_vec = "type_vec") {
+
+
+  if (is.null(cog_df)) {
+    return(summary_table)
+  }
+
+  #Check if cog_df is valid with the relevant columns
+  validate_cog_df(cog_df,
+                  needed_column = c(col_name_vec,
+                                    desc_vec,
+                                    type_vec)
+  )
+
+  # See this webpage to learn how to mutate specific columns.
+  # https://stackoverflow.com/questions/52998471/dynamically-determine-if-a-dataframe-column-exists-and-mutate-if-it-does
+
+  for (colname in colnames(summary_table)) {
+    row_index <- which(cog_df$col_name_vec == colname)
+
+    if (length(row_index) == 1) {
+      summary_table <- summary_table |>
+        dplyr::mutate(
+          dplyr::across(
+            dplyr::one_of(cog_df[[col_name_vec]][row_index]),
+            trelliscopejs::cog,
+            desc = cog_df[[desc_vec]][row_index],
+            type = cog_df[[type_vec]][row_index]
+          )
+        )
+    }
+  }
+  return(summary_table)
+}
+
+#' Update Cognostics Automatically
+#' @description Update cognostics on the dilution summary based on
+#' the cognostics data frame given by the function `create_default_cog_df`.
+#' @param summary_table The summary table generated
+#' by function [summarise_dilution_data()]
+#' @return `summary_table` with some columns converted
+#' to type cog as defined in `trelliscopejs::cog`
+#' @details
+#' More details in `trelliscopejs::cog` can be found in
+#' <https://rdrr.io/cran/trelliscopejs/man/cog.html>
+#' @rdname update_cog_auto
+#' @export
+update_cog_auto <- function(summary_table) {
+
+  # Create the default cognostics table
+  cog_df <- create_default_cog_df()
+
+  # Update the dilution summary columns and
+  # convert the relevant to cognostics
+  summary_table <- summary_table |>
+    update_cog_manual(cog_df = cog_df)
+
+  return(summary_table)
+
+}
+
+#' @title Convert To Cognostics
+#' @description Convert columns in `summary_table` to `trelliscopejs` cognostics
+#' for the `Trelliscope` display
+#' @param summary_table Input summary table as a
+#' data frame or tibble
+#' @param cog_df A data frame or tibble that contains cognostics information
+#' If no input is given the cognostics information generated by function
+#' [create_default_cog_df()] will be used.
+#' Default: NULL
+#' @param grouping_variable A character vector of
+#' column names in `summary_table`to indicate how each dilution curve
+#' should be grouped by. It is also going to be used as a conditional
+#' cognostics in the `trelliscopejs` report,
+#' Default: c("Transition_Name")
+#' @param panel_variable A column name in `summary_table` to be converted
+#' into a panel for the `Trelliscope` display
+#' Default: NULL
+#' @param col_name_vec Column name in `cog_df` to indicate the columns
+#' in `summary_table` that needs to be converted to a cognostics,
+#' Default: 'col_name_vec'
+#' @param desc_vec Column name in `cog_df` to indicate the description
+#' for each cognostics as define in `trelliscopejs::cog`,
+#' Default: 'desc_vec'
+#' @param type_vec Column name in `cog_df` to indicate the type
+#' of each cognostics as define in `trelliscopejs::cog`,
+#' Default: 'type_vec'
+#' @return The dilution summary table with `grouping variable` columns
+#' converted to conditional cognostics,
+#' other columns in `summary_table` converted to cognostics
+#' to be used in the in the `trelliscopejs` report.
+#'
+#' @rdname convert_to_cog
+#' @export
+convert_to_cog <- function(summary_table, cog_df = NULL,
+                           grouping_variable = c("Transition_Name"),
+                           panel_variable = NULL,
+                           col_name_vec = "col_name_vec",
+                           desc_vec = "desc_vec",
+                           type_vec = "type_vec") {
+
+
+  # Check if things in needed_column are in summary_table
+  assertable::assert_colnames(summary_table, grouping_variable,
+                              only_colnames = FALSE, quiet = TRUE)
+
+  # Check if panel_variable is also a grouping variable
+  if(isTRUE(panel_variable %in% grouping_variable)){
+    stop(paste("panel_variable", panel_variable,
+               "cannot be a grouping_variable")
+         )
+  }
+
+  # Convert logical columns to characters
+  summary_table <- summary_table |>
+    dplyr::mutate_if(is.logical,
+                     ~as.character(.x))
+
+  # Separate the panel variables if it is in summary_table
+  panel_df <- NULL
+  if(!is.null(panel_variable)) {
+    panel_df <- summary_table |>
+      dplyr::select(dplyr::any_of(c(grouping_variable,
+                                    panel_variable)))
+
+    summary_table <- summary_table |>
+      dplyr::select(-dplyr::any_of(c(panel_variable)))
+  }
+
+  # Get cognostics for trellis report
+  # First convert the columns based on default cognostics
+  # from create_default_cog_df()
+  # Next convert the columns based on user's input cognostics
+  # Lastly, convert the rest of the columns based on class
+  # Grouping variables must be the conditional columns
+  summary_table <- summary_table |>
+    update_cog_auto() |>
+    update_cog_manual(cog_df = cog_df,
+                      col_name_vec = col_name_vec,
+                      desc_vec = desc_vec,
+                      type_vec = type_vec) |>
+    trelliscopejs::as_cognostics(cond_cols = grouping_variable,
+                                 needs_cond = TRUE, needs_key = FALSE)
+
+  #Convert panel variables if any to trelliscope_panels
+  if(!is.null(panel_df) && ncol(panel_df) != length(grouping_variable)) {
+
+    # Ensure that the grouping variable is converted to
+    # conditional columns
+    # Ensure that the panel variable is converted to
+    # trelliscope_panel
+    panel_df <- panel_df |>
+      dplyr::select(dplyr::all_of(c(grouping_variable))) |>
+      trelliscopejs::as_cognostics(cond_cols = grouping_variable,
+                                   needs_cond = TRUE,
+                                   needs_key = FALSE) |>
+      dplyr::bind_cols(panel_df |>
+                         dplyr::select(dplyr::any_of(c(panel_variable)))
+      ) |>
+      dplyr::mutate(dplyr::across(dplyr::all_of(panel_variable),
+                    ~structure(.x,class = c("trelliscope_panels","list")))
+      )
+
+    # Panel_df to do a left join with dilution summary
+    # Move panel_variable to the end
+    summary_table <- panel_df |>
+      dplyr::left_join(summary_table, by = grouping_variable) |>
+      dplyr::relocate(dplyr::any_of(c(panel_variable)),
+                      .after = dplyr::last_col())
+
+  }
+
+  return(summary_table)
+
+}
+
+```
+
+## Cognostics Setup
+
+The function [`trelliscopejs::cog`](https://hafen.github.io/trelliscopejs/reference/cog.html) is used to convert a column into cognostic object. The following meta information must be provided in order for the conversion to be successful.
+
+Given a column name, we need to provide
+
+* Description of the column name (meta information)
+* The type of cognostics to used. For our example only "numeric" and "factor" are used. Other factor types can be found in the documentation of [`trelliscopejs::cog`](https://hafen.github.io/trelliscopejs/reference/cog.html)
+
+Here are the relevant functions to create our meta information tibble.
+
+```{r default cognostics functions}
+#| code-fold: true
+
+#' @title Create Transition Name Annotation
+#' Cognostics Data Frame
+#' @description Create transition name annotation
+#' cognostics data frame to be used to
+#' convert columns to class cognostics
+#' @return A dataframe of default cognostics information
+#' @details Internal function to create a dataframe of default cognostics
+#' information to be used by the `trelliscopejs::cog`.
+#' @examples
+#' transition_name_annot_cog_df <- create_transition_name_annot_cog_df()
+#' transition_name_annot_cog_df
+#'
+#' @rdname create_transition_name_annot_cog_df
+#' @export
+create_transition_name_annot_cog_df <- function() {
+  
+  # More details in `trelliscopejs::cog` can be found in
+  # <https://rdrr.io/cran/trelliscopejs/man/cog.html>
+
+  col_name_vec <- c("Transition_Name",
+                    "Lipid_Name",
+                    "For_Rgoslin",
+                    "Precursor_Ion",
+                    "Product_Ion",
+                    "Retention_Time_[min]",
+                    "Delta_Retention_Time_[min]",
+                    "Collision_Energy",
+                    "Cell_Accelerator_Voltage",
+                    "Polarity",
+                    "isISTD")
+
+  desc_vec <- c(
+    "Name of the transition to be mesured in the mass spectrometer.",
+    "Converted transition name to suit lipid nomenclature set by Liebisch et. al. 2020.",
+    "Input transition for the R package rgoslin to annotate.",
+    "The ion to be fragmented into smaller fragment ions.",
+    "Ions created from fragmentation of the precursor ion.",
+    "Transition name's expectred retention time.",
+    "Time window to acquire the transition. Each transition is acquired in the range Retention Time +/- 0.5(Delta Retention Time).",
+    "Rate of acceleration as the precursor ions enter the Q2 for fragmentation.",
+    "Rate of acceleration as the product ions leave the Q2.",
+    "Settings (Positive or Negative) for the mass spectrometry to detect (positive or negative) ions.",
+    "Set to TRUE if the given transition name an internal standard.")
+
+  type_vec <- c("factor",
+                "factor",
+                "factor",
+                "numeric",
+                "numeric",
+                "numeric",
+                "numeric",
+                "numeric",
+                "numeric",
+                "factor",
+                "factor")
+
+  transition_annot_name_cog_df <- data.frame(
+    col_name_vec = col_name_vec,
+    desc_vec = desc_vec,
+    type_vec = type_vec)
+  
+  return(transition_annot_name_cog_df)
+  
+}
+
+#' @title Create Rgoslin Annotation
+#' Cognostics Data Frame
+#' @description Create rgoslin annotation
+#' cognostics data frame to be used to
+#' convert columns to class cognostics
+#' @return A dataframe of default cognostics information
+#' @details Internal function to create a dataframe of default cognostics
+#' information to be used by the `trelliscopejs::cog`.
+#' @examples
+#' rgoslin_cog_df <- create_rgoslin_cog_df()
+#' rgoslin_cog_df
+#'
+#' @rdname create_rgoslin_cog_df
+#' @export
+create_rgoslin_cog_df <- function() {
+  
+  # More details in `trelliscopejs::cog` can be found in
+  # <https://rdrr.io/cran/trelliscopejs/man/cog.html> 
+  
+  col_name_vec <- c(
+    "Lipid.Maps.Category",
+    "Lipid.Maps.Main.Class",
+    "Species.Name",
+    "Molecular.Species.Name",
+    "Functional.Class.Abbr",
+    "Functional.Class.Synonyms"
+  )
+
+  desc_vec <- c(
+    "Lipid MAPS' Lipid Category which the transition name belongs to.",
+    "Lipid MAPS' Lipid Main Class which the transition name belongs to.",
+    "Represented by the sum composition, i.e., sum of carbon atoms, double bond equivalent and number of additional oxygen atoms, e.g. FA 18:1;O.",
+    "Represented by lipid species with identified fatty acyl/alkyl residues, e.g. TG 16:0_18:1_18:1.",
+    "Abbreviation used to describe the lipid's functional class based on the grammar used.",
+    "Alternative abbreviations used to describe the lipid's functional class."
+  )
+
+  type_vec <- c("factor",
+                "factor",
+                "factor",
+                "factor",
+                "factor",
+                "factor")
+  
+  rgoslin_cog_df <- data.frame(col_name_vec = col_name_vec,
+                               desc_vec = desc_vec,
+                               type_vec = type_vec)
+  
+  return(rgoslin_cog_df)
+}
+
+#' @title Create Dilution Stats
+#' Cognostics Data Frame
+#' @description Create dilution statistics
+#' cognostics data frame to be used to
+#' convert columns to class cognostics
+#' @return A dataframe of default cognostics information
+#' @details Internal function to create a dataframe of default cognostics
+#' information to be used by the `trelliscopejs::cog`.
+#' @examples
+#' dilution_stats_cog_df <- create_dilution_stats_cog_df()
+#' dilution_stats_cog_df
+#'
+#' @rdname create_dilution_stats_cog_df
+#' @export
+create_dilution_stats_cog_df <- function() {
+
+  col_name_vec <- c("r_corr",
+                    "r2_linear",
+                    "r2_linear_<=0.8")
+
+  desc_vec <- c("Pearson Correlation R value.",
+                "Linear Regression R^2 Value.",
+                "Set to TRUE if r2_linear is less than 0.8.")
+
+  type_vec <- c("numeric", "numeric",
+                "factor")
+
+  dilution_stats_cog_df <- data.frame(col_name_vec = col_name_vec,
+                                      desc_vec = desc_vec,
+                                      type_vec = type_vec)
+  return(dilution_stats_cog_df)
+}
+
+#' @title Create QC Sample Type Stats
+#' Cognostics Data Frame
+#' @description Create QC sample type statistics
+#' cognostics data frame to be used to
+#' convert columns to class cognostics
+#' @return A dataframe of default cognostics information
+#' @details Internal function to create a dataframe of default cognostics
+#' information to be used by the `trelliscopejs::cog`.
+#' @examples
+#' qc_sample_type_stats_cog_df <- create_qc_sample_type_stats_cog_df()
+#' qc_sample_type_stats_cog_df
+#'
+#' @rdname create_qc_sample_type_stats_cog_df
+#' @export
+create_qc_sample_type_stats_cog_df <- function() {
+  
+  col_name_vec <- c(
+   "bqc_mean",
+   "bqc_median",
+   "bqc_sd",
+   "bqc_mad",
+   "bqc_cv_%",
+   "bqc_cv_robust_%",
+   "tqc_mean",
+   "tqc_median",
+   "tqc_sd",
+   "tqc_mad",
+   "tqc_cv_%",
+   "tqc_cv_robust_%",
+   "spl_mean",
+   "spl_median",
+   "spl_sd",
+   "spl_mad",
+   "spl_cv_%",
+   "spl_cv_robust_%",
+   "pblk_median",
+   "pblk_to_tqc_ratio_%",
+   "bqc_cv_>20%",
+   "tqc_cv_>20%",
+   "pblk_to_tqc_ratio_>10%"
+
+  )
+
+  desc_vec <- c(
+    "Mean signal from batch / pooled QC samples defined by Broadhurst et. al. 2018.",
+    "Median signal from batch / pooled QC samples defined by Broadhurst et. al. 2018.",
+    "Standard deviation of signal from batch / pooled QC samples defined by Broadhurst et. al. 2018.",
+    "Median absolute deviation of signal from batch / pooled QC samples defined by Broadhurst et. al. 2018.",
+    "Coefficient of variation of signal in % from batch / pooled QC samples defined by Broadhurst et. al. 2018.",
+    "Robust coefficient of variation of signal in % from batch / pooled QC samples defined by Broadhurst et. al. 2018.",
+    "Mean signal from techincal QC (or pooled lipid extracts) samples defined by Broadhurst et. al. 2018.",
+    "Median signal from techincal QC (or pooled lipid extracts) samples defined by Broadhurst et. al. 2018.",
+    "Standard deviation of signal from techincal QC (or pooled lipid extracts) samples defined by Broadhurst et. al. 2018.",
+    "Median absolute deviation of signal techincal QC (or pooled lipid extracts) samples defined by Broadhurst et. al. 2018.",
+    "Coefficient of variation of signal in % from techincal QC (or pooled lipid extracts) samples defined by Broadhurst et. al. 2018.",
+    "Robust coefficient of variation in % of signal from techincal QC (or pooled lipid extracts) samples defined by Broadhurst et. al. 2018.",
+    "Mean signal from experimental (unknown) samples defined by Broadhurst et. al. 2018.",
+    "Median signal from experimental (unknown) defined by Broadhurst et. al. 2018.",
+    "Standard deviation of signal from experimental (unknown) defined by Broadhurst et. al. 2018.",
+    "Median absolute deviation of signal from experimental (unknown) defined by Broadhurst et. al. 2018.",
+    "Coefficient of variation in % of signal from experimental (unknown) defined by Broadhurst et. al. 2018.",
+    "Robust coefficient of variation in % of signal from experimental (unknown) defined by Broadhurst et. al. 2018.",
+    "Median signal from processed blank samples defined by Broadhurst et. al. 2018.",
+    "Ratio of median signal from processed blank sample to median signal from techincal QC (or pooled lipid extracts) samples defined by Broadhurst et. al. 2018.",
+    "Set to TRUE if bqc_cv is greater than 20%.",
+    "Set to TRUE if tqc_cv is greater than 20%.",
+    "Set to TRUE if pblk_to_tqc_ratio_ % is greater than 10%."
+    
+  )
+
+  type_vec <- c(
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "factor",
+    "factor",
+    "factor"
+  )
+
+  qc_sample_type_stats_cog_df <- data.frame(col_name_vec = col_name_vec,
+                                            desc_vec = desc_vec,
+                                            type_vec = type_vec)
+  return(qc_sample_type_stats_cog_df)
+  
+}
+
+#' @title Create Default Cognostics Data Frame
+#' @description Create default cognostics data frame to be used to
+#' convert columns in `dilution_summary` to class cognostics
+#' @return A dataframe of default cognostics information
+#' @details Internal function to create a dataframe of default cognostics
+#' information to be used by the `trelliscopejs::cog`.
+#' @examples
+#' cog_df <- create_default_cog_df()
+#' cog_df
+#'
+#' @rdname create_default_cog_df
+#' @export
+create_default_cog_df <- function() {
+
+  # More details in `trelliscopejs::cog` can be found in
+  # <https://rdrr.io/cran/trelliscopejs/man/cog.html>
+
+  col_name_vec <- c("Transition_Name")
+
+  desc_vec <- c("Transition_Name")
+
+  type_vec <- c("factor")
+
+  cog_df <- data.frame(col_name_vec = col_name_vec,
+                       desc_vec = desc_vec,
+                       type_vec = type_vec)
+  
+  transition_name_annot_cog_df <- create_transition_name_annot_cog_df()
+  rgoslin_cog_df <- create_rgoslin_cog_df()
+  dilution_stats_cog_df <- create_dilution_stats_cog_df()
+  qc_sample_type_stats_cog_df <- create_qc_sample_type_stats_cog_df()
+
+  cog_df <- dplyr::bind_rows(transition_name_annot_cog_df,
+                             rgoslin_cog_df,
+                             dilution_stats_cog_df,
+                             qc_sample_type_stats_cog_df,
+                             cog_df)
+
+  return(cog_df)
+}
+
+```
+
+Here is a preview of the meta information tibble
+
+```{r preview meta information}
+#| code-fold: true
+
+create_default_cog_df() |> 
+  reactable::reactable(
+    defaultPageSize = 5,
+    bordered = TRUE,
+    highlight = TRUE,
+    searchable = TRUE,
+    paginationType = "jump"
+  )
+
+```
+
+## Cognostics Creation
+
+We use the function `convert_to_cog` which uses the default `cog_df` created by `create_default_cog_df`.
+
+::: panel-tabset
+### Dilution Curves
+
+Here are the attributes of some columns in `dilution_plot_table` before conversion to cognostics.
+
+```{r before dilution curve cognostics}
+attributes(dilution_plot_table$Transition_Name)
+attributes(dilution_plot_table$Lipid_Name)
+attributes(dilution_plot_table$Precursor_Ion)
+attributes(dilution_plot_table$dilution_panel)
+```
+
+We convert each column in `dilution_plot_table` to relevant cognostics using the function `convert_to_cog`. With `Transition_Name` as a conditioning variable, `dilution_panel` as a panel variable.
+
+```{r dilution curve cognostics}
+
+dilution_trellis <- dilution_plot_table |> 
+    convert_to_cog(grouping_variable = c("Transition_Name"),
+                   panel_variable = "dilution_panel")
+```
+
+Here are the attributes of some columns in `dilution_plot_table` after conversion to cognostics. Observe that the attributes of the columns are different.
+
+For the column labelled as conditioning (grouping) variable column labelled we have.
+
+```{r after dilution curve cognostics 1}
+attributes(dilution_trellis$Transition_Name)
+```
+
+For the column labelled as a panel variable, we have
+
+```{r after dilution curve cognostics 2}
+attributes(dilution_trellis$dilution_panel)
+```
+
+For the rest of the column converted to a common cognostics, we have
+
+```{r after dilution curve cognostics 3}
+attributes(dilution_trellis$Lipid_Name)
+attributes(dilution_trellis$Precursor_Ion)
+```
+
+### Injection Sequence Plots
+
+Here are the attributes of some columns in `injection_sequence_table` before conversion to cognostics.
+
+```{r before injection sequence plot cognostics}
+attributes(injection_sequence_table$Transition_Name)
+attributes(injection_sequence_table$Lipid_Name)
+attributes(injection_sequence_table$Precursor_Ion)
+attributes(injection_sequence_table$panel)
+```
+
+We convert each column in `injection_sequence_table` to relevant cognostics using the function `convert_to_cog`. With `Transition_Name` as a conditioning variable, `panel` as a panel variable.
+
+```{r injection sequence plot cognostics}
+
+injection_sequence_trellis <- injection_sequence_table |> 
+    convert_to_cog(grouping_variable = c("Transition_Name"),
+                   panel_variable = "panel")
+```
+
+Here are the attributes of some columns in `injection_sequence_table` after conversion to cognostics. Observe that the attributes of the columns are different.
+
+For the column labelled as conditioning (grouping) variable column labelled we have.
+
+```{r after injection sequence plot cognostics 1}
+attributes(injection_sequence_trellis$Transition_Name)
+```
+
+For the column labelled as a panel variable, we have
+
+```{r after injection sequence plot cognostics 2}
+attributes(injection_sequence_trellis$panel)
+```
+
+For the rest of the column converted to a common cognostics, we have
+
+```{r after injection sequence plot cognostics 3}
+attributes(injection_sequence_trellis$Lipid_Name)
+attributes(injection_sequence_trellis$Precursor_Ion)
+```
+
+:::
+
+# Create Trellis Plot
+
+## Dilution Curves
+
+Here is a trellis plot for the dilution curves.
+
+```{r dilution curve trellis}
+
+trelliscope_name <- "Dilution Plot"
+
+dilution_trellis |> 
+  trelliscopejs::trelliscope(
+    name = trelliscope_name,
+    panel_col = "dilution_panel",
+    path = "Dilution_Plot_Folder",
+    state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
+    nrow = 2,
+    ncol = 2,
+    height = 520,
+    width = 1100,
+    self_contained = FALSE,
+    thumb = FALSE,
+    auto_cog = FALSE
+  )
+
+```
+
+## Injection Sequence Plots
+
+Here is a trellis plot for the injection sequence plots.
+
+```{r injection sequence plot trellis}
+
+trelliscope_name <- "Injection Sequence Plot"
+
+injection_sequence_trellis  |> 
+  trelliscopejs::trelliscope(
+    name = trelliscope_name,
+    panel_col = "panel",
+    path = "Injection_Sequence_Plot_Folder",
+    state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
+    nrow = 1,
+    ncol = 1,
+    height = 520,
+    width = 1100,
+    self_contained = FALSE,
+    thumb = FALSE,
+    auto_cog = FALSE
+  )
+
+```
+
+## Combined Plots
+
+It is also possible to combined the two trellis plots together as they have the same conditioning cognostics variable. Simply set the `path` to the same folder name. In the example below, `path = "Results_Folder"` was used.
+
+```{r dilution and injection sequence trellis print code, eval=FALSE}
+trelliscope_name <- "Dilution Plot"
+
+dilution_trellis |> 
+  trelliscopejs::trelliscope(
+    name = trelliscope_name,
+    panel_col = "dilution_panel",
+    path = "Results_Folder",
+    state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
+    nrow = 2,
+    ncol = 2,
+    height = 520,
+    width = 1100,
+    self_contained = FALSE,
+    thumb = FALSE,
+    auto_cog = FALSE
+  )
+
+trelliscope_name <- "Injection Sequence Plot"
+
+injection_sequence_trellis  |> 
+  trelliscopejs::trelliscope(
+    name = trelliscope_name,
+    panel_col = "panel",
+    path = "Results_Folder",
+    state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
+    nrow = 1,
+    ncol = 1,
+    height = 520,
+    width = 1100,
+    self_contained = FALSE,
+    thumb = FALSE,
+    auto_cog = FALSE
+  )
+
+```
+
+```{r dilution and injection sequence trellis run code, echo=FALSE}
+trelliscope_name <- "Dilution Plot"
+
+dilution_trellis |> 
+  trelliscopejs::trelliscope(
+    name = trelliscope_name,
+    panel_col = "dilution_panel",
+    path = "Results_Folder",
+    state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
+    nrow = 2,
+    ncol = 2,
+    height = 520,
+    width = 1100,
+    self_contained = FALSE,
+    thumb = FALSE,
+    auto_cog = FALSE
+  )
+
+trelliscope_name <- "Injection Sequence Plot"
+
+# Assign to a dummy variable to prevent it from printing to screen
+dummy <- injection_sequence_trellis  |> 
+  trelliscopejs::trelliscope(
+    name = trelliscope_name,
+    panel_col = "panel",
+    path = "Results_Folder",
+    state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
+    nrow = 1,
+    ncol = 1,
+    height = 520,
+    width = 1100,
+    self_contained = FALSE,
+    thumb = FALSE,
+    auto_cog = FALSE
+  )
+
+```
+
+# Package References
+
+```{r package references, results='asis'}
+
+get_citation <- function(package_name) {
+  transform_name <- package_name |> 
+    citation() |> 
+    format(style="text")
+  return(transform_name)
+} 
+
+packages <- c("base","here", "readr", "reactable",
+              "htmltools", "dplyr", "tidyr", "tibble",
+              "broom", "glue", "purrr", "scales",
+              "rgoslin", "plotly", "assertable",
+              "manipulateWidget", "trelliscopejs",
+              "report")
+
+table <- tibble::tibble(Packages = packages)
+
+table |>
+  dplyr::mutate(
+    transform_name = purrr::map_chr(.data[["Packages"]],
+                                    get_citation)
+  ) |> 
+  dplyr::pull(.data[["transform_name"]]) |> 
+  report::as.report_parameters()
+
+```
+
+# References
