@@ -109,12 +109,12 @@ The first column is the name of the sample. Subsequent columns are the transitio
 area_data <- readr::read_csv("https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Area.csv")
 ```
 
-Here is how the data (first 50 rows) looks like
+Here is how the data (first 30 rows) looks like
 
 ```{r preview area data}
 #| code-fold: true
 
-area_data[1:50,] |> 
+area_data[1:30,] |> 
   reactable::reactable(
     defaultPageSize = 5,
     defaultColDef = reactable::colDef(
@@ -2567,8 +2567,10 @@ dilution_trellis |>
     state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
     nrow = 2,
     ncol = 2,
-    height = 520,
-    width = 1100,
+    #height = 520,
+    #width = 1100,
+    height = 500,
+    width = 780,
     self_contained = FALSE,
     thumb = FALSE,
     auto_cog = FALSE
@@ -2592,8 +2594,10 @@ injection_sequence_trellis  |>
     state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
     nrow = 1,
     ncol = 1,
-    height = 520,
-    width = 1100,
+    #height = 520,
+    #width = 1100,
+    height = 500,
+    width = 780,
     self_contained = FALSE,
     thumb = FALSE,
     auto_cog = FALSE
@@ -2603,7 +2607,7 @@ injection_sequence_trellis  |>
 
 ## Combined Plots
 
-It is also possible to combined the two trellis plots together as they have the same conditioning cognostics variable. Simply set the `path` to the same folder name. In the example below, `path = "Results_Folder"` was used.
+It is also possible to combined the two trellis plots together as they have the same conditioning cognostics variable. Simply set the `path` to the same folder name. In the example below, `path = "docs"` was used.
 
 ```{r dilution and injection sequence trellis print code, eval=FALSE}
 trelliscope_name <- "Dilution Plot"
@@ -2612,7 +2616,7 @@ dilution_trellis |>
   trelliscopejs::trelliscope(
     name = trelliscope_name,
     panel_col = "dilution_panel",
-    path = "Results_Folder",
+    path = "docs",
     state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
     nrow = 2,
     ncol = 2,
@@ -2629,7 +2633,7 @@ injection_sequence_trellis  |>
   trelliscopejs::trelliscope(
     name = trelliscope_name,
     panel_col = "panel",
-    path = "Results_Folder",
+    path = "docs",
     state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
     nrow = 1,
     ncol = 1,
@@ -2642,42 +2646,8 @@ injection_sequence_trellis  |>
 
 ```
 
-```{r dilution and injection sequence trellis run code, echo=FALSE}
-trelliscope_name <- "Dilution Plot"
-
-dilution_trellis |> 
-  trelliscopejs::trelliscope(
-    name = trelliscope_name,
-    panel_col = "dilution_panel",
-    path = "Results_Folder",
-    state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
-    nrow = 2,
-    ncol = 2,
-    height = 520,
-    width = 1100,
-    self_contained = FALSE,
-    thumb = FALSE,
-    auto_cog = FALSE
-  )
-
-trelliscope_name <- "Injection Sequence Plot"
-
-# Assign to a dummy variable to prevent it from printing to screen
-dummy <- injection_sequence_trellis  |> 
-  trelliscopejs::trelliscope(
-    name = trelliscope_name,
-    panel_col = "panel",
-    path = "Results_Folder",
-    state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
-    nrow = 1,
-    ncol = 1,
-    height = 520,
-    width = 1100,
-    self_contained = FALSE,
-    thumb = FALSE,
-    auto_cog = FALSE
-  )
-
+```{=html}
+<iframe width="780" height="500" src="https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Supplementary1/"></iframe>
 ```
 
 # Package References
