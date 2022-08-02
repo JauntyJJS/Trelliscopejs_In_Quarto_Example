@@ -4,7 +4,7 @@
 
 .Rhistory
 .Rprofile
-*.JPG
+*.zip
 *.html
 *.qmd
 *.lock
