@@ -6,7 +6,7 @@
 .Rprofile
 *.zip
 
-
+docs
 exclude
 renv
 .Rdata

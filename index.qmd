@@ -15,10 +15,11 @@ knitr:
     tidyverse-quiet: TRUE
 format:
   html:
-    theme: cerulean
-    highlight-style: pygments
+    theme: 
+      light: cerulean 
+      dark: cyborg
     toc: true
-    toc-depth: 4
+    toc-depth: 3
     toc-location: left
     number-sections: false
     code-fold: show
@@ -28,6 +29,10 @@ format:
     code-tools: true
     self-contained: false
     smooth-scroll: true
+    image: "featured.JPG"
+    image-height: 600px
+    image-width: 335px
+    image-alt: "Injection Sequence Plot"
 ---
 
 # Introduction
@@ -2567,10 +2572,8 @@ dilution_trellis |>
     state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
     nrow = 2,
     ncol = 2,
-    #height = 520,
-    #width = 1100,
-    height = 500,
-    width = 780,
+    height = 520,
+    width = 1100,
     self_contained = FALSE,
     thumb = FALSE,
     auto_cog = FALSE
@@ -2594,10 +2597,8 @@ injection_sequence_trellis  |>
     state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
     nrow = 1,
     ncol = 1,
-    #height = 520,
-    #width = 1100,
-    height = 500,
-    width = 780,
+    height = 520,
+    width = 1100,
     self_contained = FALSE,
     thumb = FALSE,
     auto_cog = FALSE
@@ -2608,6 +2609,8 @@ injection_sequence_trellis  |>
 ## Combined Plots
 
 It is also possible to combined the two trellis plots together as they have the same conditioning cognostics variable. Simply set the `path` to the same folder name. In the example below, `path = "docs"` was used.
+
+Unfortunately, the trellis plot does not seems to function properly in the Quarto document. As such, the code below is called interactive via the console.
 
 ```{r dilution and injection sequence trellis print code, eval=FALSE}
 trelliscope_name <- "Dilution Plot"
@@ -2645,6 +2648,10 @@ injection_sequence_trellis  |>
   )
 
 ```
+
+A `docs` folder will be created. It is currently placed in this [GitHub repository](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Supplementary1). 
+
+Below is just an embedded webpage of the trellis plot. It can be accessed via this [GitHub Page link](https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Supplementary1/).
 
 ```{=html}
 <iframe width="780" height="500" src="https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Supplementary1/"></iframe>

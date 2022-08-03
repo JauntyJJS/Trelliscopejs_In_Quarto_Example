@@ -4,9 +4,9 @@ __loadDisplayList__bbf920b8([
     "name": "Injection_Sequence_Plot",
     "desc": "",
     "n": 750,
-    "height": 500,
-    "width": 780,
-    "updated": "2022-08-02 22:50:33",
+    "height": 520,
+    "width": 1100,
+    "updated": "2022-08-03 12:45:42",
     "keySig": "c4672a4af9176e2487c43b7b4f8720cd"
   }
 ])
