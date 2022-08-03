@@ -1,6 +1,8 @@
 ---
 title: "Quarto Report Example With Plotly and Trelliscopejs"
-subtitle: This document was prepared on `r format(Sys.Date())`.
+author:
+  - name: Jeremy Selva [{{< fa solid link >}}](https://jeremy-selva.netlify.app/) [{{< fa brands github >}}](https://github.com/JauntyJJS) [{{< fa brands linkedin >}}](https://www.linkedin.com/in/jeremy-selva-085b9112a) [{{< fa brands twitter >}}](https://twitter.com/jauntyjjs) 
+    url: https://jeremy-selva.netlify.app
 bibliography: utils/bibliography.bib
 csl: utils/f1000research.csl
 knitr:
