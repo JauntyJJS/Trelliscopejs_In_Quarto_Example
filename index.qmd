@@ -29,10 +29,6 @@ format:
     code-tools: true
     self-contained: false
     smooth-scroll: true
-    image: "featured.JPG"
-    image-height: 600px
-    image-width: 335px
-    image-alt: "Injection Sequence Plot"
 ---
 
 # Introduction
