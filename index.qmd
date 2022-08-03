@@ -56,7 +56,6 @@ These multiple interactive plots will be displayed as a trellis using [`trellisc
 library("report")
 
 # For reading files
-library("here")
 library("readr")
 
 # For interactive tables
@@ -75,7 +74,8 @@ library("glue")
 library("scales")
 
 # For lipid annotation
-library("rgoslin") # From github
+# Install from BioConductor
+library("rgoslin")
 
 # For plotting
 library("plotly")
