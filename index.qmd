@@ -40,10 +40,10 @@ Here is a report showing how to create injection sequence plot and dilution plot
 ::: panel-tabset
 
 ## Injection Sequence Plot
-![Injection Sequence Plot](images/Injection_Sequence.JPG){fig-alt="An injection sequence plot."}
+![Injection Sequence Plot](images/Injection_Sequence.JPG){fig-alt="An injection sequence plot. It consists of two figures. The figure on the left is a scatter plot with the y axis as peak area while the x axis as the injection sequence. Colours on the scatter plot are based on the quality control sample types. The figure in the right is a raincloud plot with the y axis as peak area while the x axis as quality control sample types. Colours on the raincloud plot are based on the quality control sample types."}
 
 ## Dilution Plot
-![Dilution Plot](images/Dilution_Plot.JPG){fig-alt="A dilution plot."}
+![Dilution Plot](images/Dilution_Plot.JPG){fig-alt="A dilution plot with the y axis as the peak area and the x axis as relative sample amount in percentages. Both linear and quadratic regression are used to fit the dilution points."}
 
 :::
 
@@ -103,7 +103,7 @@ The data we are using are from [Wolrab et. al 2022](https://doi.org/10.1038/s414
 ::: panel-tabset
 ## Peak Area Data
 
-We read the transition's peak area measurement using Reversed-Phase UltraHigh-Performance Liquid Chromatography/ Mass Spectrometry (RP-UHPLC)/MS). The measurement is done by lab 3 during Phase II of the project.
+We read the transition's peak area measurement using Reversed-Phase Ultra High-Performance Liquid Chromatography/ Mass Spectrometry (RP-UHPLC/MS). The measurement is done by lab 3 during Phase II of the project.
 
 The first column is the name of the sample. Subsequent columns are the transition's integrated peak areas.
 
@@ -1193,6 +1193,47 @@ The relevant functions to do this plot are as follows.
 ```{r dilution plot functions}
 #| code-fold: true
 
+#' @title Plot Dilution Curve Using `plotly`
+#' @description Plot Dilution Data using `plotly`
+#' @param dilution_data A data frame or tibble containing dilution data
+#' @param dilution_title Title to use for each dilution plot
+#' @param dilution_pal Input palette for each dilution batch group in `dil_batch_var`.
+#' It is a named char vector where each value is a colour and
+#' name is a dilution batch group given in `dil_batch_var`
+#' @param sample_name_var Column name in `dilution_data`
+#' to indicate the sample name
+#' @param dil_batch_var Column name in `dilution_data`
+#' to indicate the group name of each dilution batch,
+#' used to colour the points in the dilution plot
+#' @param conc_var Column name in `dilution_data` to indicate concentration
+#' @param conc_var_units Unit of measure for `conc_var` in the dilution plot
+#' @param conc_var_interval Distance between two tick labels
+#' @param signal_var Column name in `dilution_data` to indicate signal
+#' @param x_axis_title The x axis title for the graph. If there is no input,
+#' column name corresponding to `conc_var` will be used instead.
+#' @param y_axis_title The y axis title for the graph. If there is no input,
+#' column name corresponding to `signal_var` will be used instead.
+#' @param y_axis_rangemode Wrapper of `plotly` `rangemode`. If "normal" the
+#' y range should be computed in relation to the extrema of the input data.
+#' If "tozero", the range extends to 0. If "nonnegative",
+#' the range is non-negative, regardless of the input data.
+#' Default: "normal"
+#' @param lin_reg_name The name of the linear regression line used to fit
+#' the dilution data. The name will be displayed in the legend.
+#' Default: "lin reg"
+#' @param quad_reg_name The name of the quadratic regression line used to
+#' fit the dilution data. The name will be displayed in the legend.
+#' Default: "quad reg"
+#' @param show_legend Decide if we want to create legends for the plot.
+#' If we are creating a sub plot with shared legends, ensure that only
+#' the first plot has show_legend set to TRUE, the rest must be set to FALSE.
+#' Default: TRUE
+#' @param show_y_axis_title Decide if we want to show the y-axis title.
+#' Default: TRUE
+#' @param annotation_var Column name in `dilution_data` to show in hover point
+#' @return Output `plotly` dilution plot data of one dilution batch per transition
+#' @rdname plot_dil_curve_plotly
+#' @export
 plot_dil_curve_plotly <- function(dilution_data,
                                   dilution_title,
                                   dilution_pal,
@@ -1471,6 +1512,39 @@ The relevant function to do the scatter plot is as follows.
 ```{r plot scatter plot functions}
 #| code-fold: true
 
+#' @title Plot Scatter Plot Using `plotly`
+#' @description Plot Scatter Plot using `plotly`
+#' @param scatterplot_data A data frame or tibble containing data
+#' to be plotted in the scatter plot
+#' @param scatterplot_pal Input palette for category group
+#' It is a named char vector where each value is a colour and
+#' name is a category group.
+#' @param x_axis_var Column name in `scatterplot_data` to use
+#' as x axis of scatter plot. Default: 'Injection_Sequence'
+#' @param y_axis_var Column name in `scatterplot_data` to use
+#' as y axis of scatter plot. Default: 'Area'
+#' @param sample_name_var Column name in `scatterplot_data` to use
+#' in the hover text for each point in the scatter plot.
+#' Default: 'Sample_Name'
+#' @param legend_category_var Column name in `scatterplot_data` to use
+#' for legend and colour, Default: 'QC_Sample_Type'
+#' @param legend_title Input character to use as legend title. 
+#' If there is no input, input character from `legend_category_var` 
+#' will be used instead. Default: ''
+#' @param annotation_var Column name in `scatterplot_data` to show in hover point
+#' Default: c()
+#' @param lod_val Input numeric to indicate the limit of detection value in 
+#' the scatter plot as a red horizontal line. It is not plotted if no input
+#' is provided. Default: NA
+#' @param show_y_axis_title Decide if we want to show the y-axis title.
+#' Default: FALSE
+#' @param show_legend Decide if we want to create legends for the plot.
+#' If we are creating a sub plot with shared legends, ensure that only
+#' the first plot has show_legend set to TRUE, the rest must be set to FALSE.
+#' Default: TRUE
+#' @return Output `plotly` scatter plot
+#' @rdname plot_scatterplot_plotly
+#' @export
 plot_scatterplot_plotly <- function(scatterplot_data,
                                     scatterplot_pal,
                                     x_axis_var = "Injection_Sequence",
@@ -1663,6 +1737,36 @@ The relevant function to do the raincloud plot is as follows.
 ```{r plot raincloud plot functions}
 #| code-fold: true
 
+#' @title Plot Raincloud Plot Using `plotly`
+#' @description Plot Raincloud Plot using `plotly`
+#' @param raincloud_data A data frame or tibble containing data to be plotted
+#' into a raincloud plot
+#' @param raincloud_pal Input palette for category group
+#' It is a named char vector where each value is a colour and
+#' name is a category group
+#' @param x_axis_var Column name in `raincloud_data` to use
+#' as x axis of raincloud plot. Default: 'QC_Sample_Type'
+#' @param y_axis_var Column name in `raincloud_data` to use
+#' as y axis of raincloud plot. Default: 'Area'
+#' @param sample_name_var Column name in `raincloud _data` to use
+#' in the hover text for each point in the raincloud  plot.
+#' Default: 'Sample_Name'
+#' @param legend_category_var Column name in `raincloud _data` to use
+#' for legend and colour, Default: 'QC_Sample_Type'
+#' @param legend_title Input character to use as legend title. 
+#' If there is no input, input character from `legend_category_var` 
+#' will be used instead. Default: ''
+#' @param annotation_var Column name in `raincloud_data` to show in hover point
+#' Default: c()
+#' @param show_y_axis_title Decide if we want to show the y-axis title.
+#' Default: FALSE
+#' @param show_legend Decide if we want to create legends for the plot.
+#' If we are creating a sub plot with shared legends, ensure that only
+#' the first plot has show_legend set to TRUE, the rest must be set to FALSE.
+#' Default: TRUE
+#' @return Output `plotly` raincloud plot
+#' @rdname plot_raincloud_plotly
+#' @export
 plot_raincloud_plotly <- function(raincloud_data,
                                   raincloud_pal,
                                   x_axis_var = "QC_Sample_Type",
@@ -1670,9 +1774,7 @@ plot_raincloud_plotly <- function(raincloud_data,
                                   sample_name_var = "Sample_Name",
                                   legend_category_var = "QC_Sample_Type",
                                   legend_title = "",
-                                  annotation_var = c("Injection_Sequence",
-                                                     "Area",
-                                                     "QC_Sample_Type"),
+                                  annotation_var = c(),
                                   show_y_axis_title = FALSE,
                                   show_legend = TRUE) {
   
@@ -2608,7 +2710,7 @@ injection_sequence_trellis  |>
 
 It is also possible to combined the two trellis plots together as they have the same conditioning cognostics variable. Simply set the `path` to the same folder name. In the example below, `path = "docs"` was used.
 
-Unfortunately, the trellis plot does not seems to function properly in the Quarto document. As such, the code below is called interactive via the console.
+Unfortunately, the trellis plot does not seems to function properly in the Quarto document. As such, the code below is called interactively via the console.
 
 ```{r dilution and injection sequence trellis print code, eval=FALSE}
 trelliscope_name <- "Dilution Plot"
@@ -2658,6 +2760,7 @@ Below is just an embedded webpage of the trellis plot. It can be accessed via th
 # Package References
 
 ```{r package references, results='asis'}
+#| code-fold: true
 
 get_citation <- function(package_name) {
   transform_name <- package_name |> 
