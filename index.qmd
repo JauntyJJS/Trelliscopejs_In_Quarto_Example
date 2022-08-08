@@ -27,7 +27,7 @@ format:
     code-fold: show
     code-overflow: scroll
     code-line-numbers: true
-    code-copy: hover
+    code-copy: true
     code-tools: true
     self-contained: false
     smooth-scroll: true
