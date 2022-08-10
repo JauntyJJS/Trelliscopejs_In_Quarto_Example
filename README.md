@@ -40,7 +40,7 @@ BibTeX citation:
 
     @online{selva2022,
       author = {Jeremy Selva},
-      title = {Citation {Test}},
+      title = {Quarto Report Example With Plotly and Trelliscopejs},
       date = {2022-08-08},
       url = {https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Example/},
       langid = {en},
