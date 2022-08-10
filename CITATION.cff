@@ -6,7 +6,7 @@ title: Quarto Report Example With Plotly and Trelliscopejs
 abstract: A report showing how to create injection sequence plot and dilution plot using R package plotly for each transition and display them as an interactive trellis plot using R package trelliscopejs.
 message: >-
   For attribution, please cite this work as:
-type: webpage
+type: online
 authors:
   - given-names: Jeremy
     family-names: Selva
