@@ -14,7 +14,7 @@ authors:
     orcid: 'https://orcid.org/0000-0002-4498-2662'
 date-released: 2022-08-08
 repository: "https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example"
-url: "https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Example/""
+url: "https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Example"
 keywords:
  - plotly
  - trelliscopejs
