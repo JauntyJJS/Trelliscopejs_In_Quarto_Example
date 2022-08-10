@@ -6,7 +6,6 @@
 .Rprofile
 
 docs
-exclude
 renv
 .Rdata
 .httr-oauth

@@ -23,3 +23,8 @@ alt="Dilution Plot" />
 
 These multiple interactive plots will be displayed as a trellis using
 [`trelliscopejs`](https://hafen.github.io/trelliscopejs/).
+
+Refer to the [NEWS.md
+file](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/blob/main/NEWS.md)
+to see what is being worked on as well as update to changes between back
+to back versions.

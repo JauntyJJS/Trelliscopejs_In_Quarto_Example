@@ -1,7 +1,0 @@
-col_name_vec,desc_vec,type_vec
-Lipid.Maps.Category,Lipid MAPS' Lipid Category which the transition name belongs to.,factor
-Lipid.Maps.Main.Class,Lipid MAPS' Lipid Main Class which the transition name belongs to.,factor
-Species.Name,"Represented by the sum composition, i.e., sum of carbon atoms, double bond equivalent and number of additional oxygen atoms, e.g. FA 18:1;O.",factor
-Molecular.Species.Name,"Represented by lipid species with identified fatty acyl/alkyl residues, e.g. TG 16:0_18:1_18:1.",factor
-Functional.Class.Abbr,Abbreviation used to describe the lipid's functional class based on the grammar used.,factor
-Functional.Class.Synonyms,Alternative abbreviations used to describe the lipid's functional class.,factor
