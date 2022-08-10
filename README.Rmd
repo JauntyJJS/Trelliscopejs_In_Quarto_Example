@@ -31,3 +31,20 @@ Refer to the [NEWS.md file](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto
 # Input Data and Results Download
 
 Input data and results generated from the Quarto script can be downloaded from [Releases](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/releases) section in GitHub.
+
+Citation
+
+BibTeX citation:
+
+```
+@online{selva2022,
+  author = {Jeremy Selva},
+  title = {Citation {Test}},
+  date = {2022-08-08},
+  url = {https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Example/},
+  langid = {en},
+  abstract = {A report showing how to create injection sequence plot and
+    dilution plot using R package plotly for each transition and display
+    them as an interactive trellis plot using R package trelliscopejs.}
+}
+```
