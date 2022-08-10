@@ -1,8 +1,5 @@
 ---
 title: "Quarto Report Example With Plotly and Trelliscopejs"
-author:
-  - name: Jeremy Selva [{{< fa solid link >}}](https://jeremy-selva.netlify.app/) [{{< fa brands github >}}](https://github.com/JauntyJJS) [{{< fa brands linkedin >}}](https://www.linkedin.com/in/jeremy-selva-085b9112a) [{{< fa brands twitter >}}](https://twitter.com/jauntyjjs) 
-    url: https://jeremy-selva.netlify.app
 bibliography: utils/bibliography.bib
 csl: utils/f1000research.csl
 knitr:
@@ -15,6 +12,13 @@ knitr:
     cache: FALSE
     comment: ">"
     tidyverse-quiet: TRUE
+citation:
+  type: webpage
+  author: Jeremy Selva
+  issued: 8/8/2022
+  keyword: plotly, trelliscopejs, Data Visualisation
+  abstract: A report showing how to create injection sequence plot and dilution plot using R package plotly for each transition and display them as an interactive trellis plot using R package trelliscopejs.
+  url: https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Example/
 format:
   html:
     theme: 
@@ -32,6 +36,8 @@ format:
     self-contained: false
     smooth-scroll: true
 ---
+
+Written by Jeremy Selva [{{< fa solid link >}}](https://jeremy-selva.netlify.app/) [{{< fa brands github >}}](https://github.com/JauntyJJS) [{{< fa brands linkedin >}}](https://www.linkedin.com/in/jeremy-selva-085b9112a) [{{< fa brands twitter >}}](https://twitter.com/jauntyjjs)
 
 # Introduction
 
