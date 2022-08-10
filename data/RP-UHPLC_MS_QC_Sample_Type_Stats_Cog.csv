@@ -1,0 +1,24 @@
+col_name_vec,desc_vec,type_vec
+bqc_mean,Mean signal from batch/pooled QC samples defined by Broadhurst et. al. 2018.,numeric
+bqc_median,Median signal from batch/pooled QC samples defined by Broadhurst et. al. 2018.,numeric
+bqc_sd,Standard deviation of signal from batch/pooled QC samples defined by Broadhurst et. al. 2018.,numeric
+bqc_mad,Median absolute deviation of signal from batch/pooled QC samples defined by Broadhurst et. al. 2018.,numeric
+bqc_cv_%,Coefficient of variation of signal in % from batch/pooled QC samples defined by Broadhurst et. al. 2018.,numeric
+bqc_cv_robust_%,Robust coefficient of variation of signal in % from batch/pooled QC samples defined by Broadhurst et. al. 2018.,numeric
+tqc_mean,Mean signal from techincal QC (or pooled lipid extracts) samples defined by Broadhurst et. al. 2018.,numeric
+tqc_median,Median signal from techincal QC (or pooled lipid extracts) samples defined by Broadhurst et. al. 2018.,numeric
+tqc_sd,Standard deviation of signal from techincal QC (or pooled lipid extracts) samples defined by Broadhurst et. al. 2018.,numeric
+tqc_mad,Median absolute deviation of signal techincal QC (or pooled lipid extracts) samples defined by Broadhurst et. al. 2018.,numeric
+tqc_cv_%,Coefficient of variation of signal in % from techincal QC (or pooled lipid extracts) samples defined by Broadhurst et. al. 2018.,numeric
+tqc_cv_robust_%,Robust coefficient of variation in % of signal from techincal QC (or pooled lipid extracts) samples defined by Broadhurst et. al. 2018.,numeric
+spl_mean,Mean signal from experimental (unknown) samples defined by Broadhurst et. al. 2018.,numeric
+spl_median,Median signal from experimental (unknown) defined by Broadhurst et. al. 2018.,numeric
+spl_sd,Standard deviation of signal from experimental (unknown) defined by Broadhurst et. al. 2018.,numeric
+spl_mad,Median absolute deviation of signal from experimental (unknown) defined by Broadhurst et. al. 2018.,numeric
+spl_cv_%,Coefficient of variation in % of signal from experimental (unknown) defined by Broadhurst et. al. 2018.,numeric
+spl_cv_robust_%,Robust coefficient of variation in % of signal from experimental (unknown) defined by Broadhurst et. al. 2018.,numeric
+pblk_median,Median signal from processed blank samples defined by Broadhurst et. al. 2018.,numeric
+pblk_to_tqc_ratio_%,Ratio of median signal from processed blank sample to median signal from techincal QC (or pooled lipid extracts) samples.,numeric
+bqc_cv_>20%,Set to TRUE if bqc_cv is greater than 20%.,factor
+tqc_cv_>20%,Set to TRUE if tqc_cv is greater than 20%.,factor
+pblk_to_tqc_ratio_>10%,Set to TRUE if pblk_to_tqc_ratio_% is greater than 10%.,factor
