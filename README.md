@@ -28,3 +28,10 @@ Refer to the [NEWS.md
 file](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/blob/main/NEWS.md)
 to see what is being worked on as well as update to changes between back
 to back versions.
+
+# Input Data and Results Download
+
+Input data and results generated from the Quarto script can be
+downloaded from
+[Releases](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/releases)
+section in GitHub.
