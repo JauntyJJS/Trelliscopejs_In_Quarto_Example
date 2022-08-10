@@ -14,7 +14,10 @@ knitr::opts_chunk$set(
 
 # Quarto Report Example With Plotly and Trelliscopejs
 
-Here is a report showing how to create injection sequence plot and dilution plot using [`plotly`](https://plotly.com/r/) for each transition.
+Here is a report showing how to create injection sequence plot and dilution plot using [`plotly`](https://plotly.com/r/) for each transition. These multiple interactive plots will be displayed as a trellis using [`trelliscopejs`](https://hafen.github.io/trelliscopejs/).
+
+Refer to the [NEWS.md file](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/blob/main/NEWS.md) to see what is being worked on as well as update to changes between back to back versions.
+
 
 ## Injection Sequence Plot
 
@@ -24,9 +27,6 @@ Here is a report showing how to create injection sequence plot and dilution plot
 
 ![Dilution Plot](images/Dilution_Plot.JPG){fig-alt="A dilution plot."}
 
-These multiple interactive plots will be displayed as a trellis using [`trelliscopejs`](https://hafen.github.io/trelliscopejs/).
-
-Refer to the [NEWS.md file](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/blob/main/NEWS.md) to see what is being worked on as well as update to changes between back to back versions.
 
 # Input Data and Results Download
 
