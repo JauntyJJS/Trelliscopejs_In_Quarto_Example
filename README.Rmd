@@ -32,6 +32,7 @@ Refer to the [NEWS.md file](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto
 
 Input data and results generated from the Quarto script can be downloaded from [Releases](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/releases) section in GitHub.
 
+
 # Citation
 
 BibTeX citation:

@@ -34,7 +34,7 @@ downloaded from
 [Releases](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/releases)
 section in GitHub.
 
-Citation
+# Citation
 
 BibTeX citation:
 
