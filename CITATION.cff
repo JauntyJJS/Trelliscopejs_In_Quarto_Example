@@ -1,0 +1,21 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Quarto Report Example With Plotly and Trelliscopejs
+abstract: A report showing how to create injection sequence plot and dilution plot using R package plotly for each transition and display them as an interactive trellis plot using R package trelliscopejs.
+message: >-
+  For attribution, please cite this work as:
+type: webpage
+authors:
+  - given-names: Jeremy
+    family-names: Selva
+    email: jeremy1189.jjs@gmail.com
+    orcid: 'https://orcid.org/0000-0002-4498-2662'
+date-released: 2022-08-08
+repository: "https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example"
+url: "https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Example/""
+keywords:
+ - plotly
+ - trelliscopejs
+ - Data Visualisation
