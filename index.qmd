@@ -43,8 +43,6 @@ Written by Jeremy Selva [{{< fa solid link >}}](https://jeremy-selva.netlify.app
 
 Here is a report showing how to create injection sequence plot and dilution plot using [`plotly`](https://plotly.com/r/) for each Multiple Reaction Monitoring (MRM) transition in Mass Spectrometry.
 
-
-
 ::: panel-tabset
 
 ## Injection Sequence Plot
@@ -56,6 +54,8 @@ Here is a report showing how to create injection sequence plot and dilution plot
 :::
 
 These multiple interactive plots will be displayed as a trellis using [`trelliscopejs`](https://hafen.github.io/trelliscopejs/).
+
+The source code used to generate this report can be found in this [GitHub page](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example).
 
 # Background
 
