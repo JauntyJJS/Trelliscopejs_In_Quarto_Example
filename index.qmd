@@ -12,6 +12,18 @@ knitr:
     cache: FALSE
     comment: ">"
     tidyverse-quiet: TRUE
+filters:
+  - social-share
+share:
+  permalink: "https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Example/"
+  description: "A report showing how to create injection sequence plot and dilution plot using R package plotly for each Multiple Reaction Monitoring (MRM) transition and display them as an interactive trellis plot using R package trelliscopejs"
+  twitter: true
+  facebook: true
+  reddit: true
+  stumble: true
+  tumblr: true
+  linkedin: true
+  email: true
 citation:
   type: webpage
   author: Jeremy Selva
