@@ -42,7 +42,8 @@ format:
     number-sections: false
     code-fold: show
     code-overflow: scroll
-    code-line-numbers: true
+    code-line-numbers: false
+    code-link: true
     code-copy: true
     code-tools: true
     self-contained: false
@@ -95,6 +96,8 @@ The dilution plot, on the other hand, checks for possible signal enhancement or 
 #| code-fold: true
 
 # For session info and package reporting
+library("sessioninfo")
+library("quarto")
 library("report")
 
 # For reading files
@@ -131,9 +134,77 @@ library("manipulateWidget")
 # For trellis plot
 library("trelliscopejs")
 
-sessionInfo() |> 
-  report::report() |> 
-  summary()
+```
+
+```{r See packages info}
+#| code-fold: true
+r_package_table <- sessioninfo::package_info()
+rownames(r_package_table) <- NULL
+
+r_package_table |>
+  dplyr::mutate(
+    version = ifelse(is.na(r_package_table$loadedversion), 
+                     r_package_table$ondiskversion, 
+                     r_package_table$loadedversion)
+  ) |> 
+  dplyr::filter(.data$attached == TRUE) |> 
+  dplyr::select(
+    dplyr::any_of(c("package", "version", 
+                    "date", "source")
+    )
+  ) |> 
+  reactable::reactable(
+    columns = list(
+      package = reactable::colDef(
+        # Freeze first column
+        sticky = "left",
+        style = list(borderRight = "1px solid #eee"),
+        headerStyle = list(borderRight = "1px solid #eee"))
+  )
+  )
+```
+
+# R Platform Information
+
+```{r See session info}
+#| code-fold: true
+
+# Taken from https://github.com/r-lib/sessioninfo/issues/75
+get_quarto_version <- function() {
+  if (isNamespaceLoaded("quarto")) {
+    path <- quarto::quarto_path()
+    ver <- system("quarto -V", intern = TRUE)
+    if (is.null(path)) {
+      "NA (via quarto)"
+    } else {
+      paste0(ver, " @ ", path, "/ (via quarto)")
+    }
+  } else {
+    path <- Sys.which("quarto")
+    if (path == "") {
+      "NA"
+    } else {
+      ver <- system("quarto -V", intern = TRUE)
+      paste0(ver, " @ ", path)
+    }
+  }
+}
+
+
+r_platform_table <- sessioninfo::platform_info()
+r_platform_table[["quarto"]] <- get_quarto_version()[1]
+
+r_platform_table <- data.frame(
+    setting = names(r_platform_table),
+    value = unlist(r_platform_table,
+                   use.names = FALSE),
+    stringsAsFactors = FALSE
+  )
+
+r_platform_table |>
+  reactable::reactable(
+    defaultPageSize = 5
+  )
 ```
 
 # Input Data
@@ -141,6 +212,7 @@ sessionInfo() |>
 The data we are using are from [Wolrab et. al 2022](https://doi.org/10.1038/s41467-021-27765-9) [@Wolrab2022].
 
 ::: panel-tabset
+
 ## Peak Area Data
 
 We read the transition's peak area measurement using Reversed-Phase Ultra High-Performance Liquid Chromatography/ Mass Spectrometry (RP-UHPLC/MS). The measurement is done by lab 3 during Phase II of the project.
@@ -148,8 +220,9 @@ We read the transition's peak area measurement using Reversed-Phase Ultra High-P
 The first column is the name of the sample. Subsequent columns are the transition's integrated peak areas.
 
 ```{r read area data}
-
-area_data <- readr::read_csv("https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Area.csv")
+area_data <- readr::read_csv(
+  file = "https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Area.csv",
+  show_col_types = FALSE)
 ```
 
 Here is how the data (first 30 rows) looks like
@@ -182,7 +255,9 @@ area_data[1:30,] |>
 The transition annotation provides information about the given transitions that has been measured.
 
 ```{r read transition name annotation}
-transition_name_annot <- readr::read_csv("https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Transition_Name_Annot.csv")
+transition_name_annot <- readr::read_csv(
+  file = "https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Transition_Name_Annot.csv",
+  show_col_types = FALSE)
 
 ```
 
@@ -231,7 +306,9 @@ transition_name_annot |>
 The sample annotation provides information about the given samples that has been measured.
 
 ```{r read sample annotation}
-sample_annot <- readr::read_csv("https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Sample_Annot.csv")
+sample_annot <- readr::read_csv(
+  file = "https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Sample_Annot.csv",
+  show_col_types = FALSE)
 ```
 
 Here are the column descriptions.
@@ -293,7 +370,9 @@ sample_annot |>
 The dilution annotation provides information about the given RQC samples that has been measured.
 
 ```{r read dilution annotation}
-dilution_annot <- readr::read_csv("https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Dilution_Annot.csv")
+dilution_annot <- readr::read_csv(
+  file = "https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Dilution_Annot.csv",
+  show_col_types = FALSE)
 
 ```
 
@@ -350,7 +429,7 @@ nested_sample_data <- sample_annot |>
                       values_to = "Area") |> 
   dplyr::group_by(.data[["Transition_Name"]]) |>
   tidyr::nest() |>
-  dplyr::rename(sample_data = .data[["data"]]) |> 
+  dplyr::rename(sample_data = dplyr::all_of("data")) |> 
   dplyr::ungroup()
 
 ```
@@ -408,7 +487,7 @@ nested_dilution_data <- dilution_annot |>
                       values_to = "Area") |> 
   dplyr::group_by(.data[["Transition_Name"]]) |>
   tidyr::nest() |>
-  dplyr::rename(dilution_data = .data[["data"]]) |> 
+  dplyr::rename(dilution_data = dplyr::all_of("data")) |> 
   dplyr::ungroup()
 ```
 
@@ -554,11 +633,11 @@ Below is an code example (not part of the pipeline) on how [rgoslin](https://git
 ```{r rgoslin demo}
 
 rgoslin_example <- annotated_data |> 
-  dplyr::select(.data[["For_Rgoslin"]]) |> 
+  dplyr::select(dplyr::all_of("For_Rgoslin")) |> 
   dplyr::mutate(GoslinOutput = purrr::map(.data[["For_Rgoslin"]],
                                           rgoslin::parseLipidNames)
                 ) |> 
-  tidyr::unnest(.data$GoslinOutput) |> 
+  tidyr::unnest(dplyr::all_of("GoslinOutput")) |> 
   dplyr::rows_update(
     tibble::tibble(
       `For_Rgoslin` = "Coenzyme Q10",
@@ -888,7 +967,7 @@ summary_data <- annotated_data |>
                                 conc_var = "Relative_Sample_Amount_[%]",
                                 signal_var = "Area")
   ) |>
-  tidyr::unnest(.data$dilution_summary) |> 
+  tidyr::unnest(dplyr::all_of("dilution_summary")) |> 
   dplyr::mutate(
     `r2_linear_<=0.8` = dplyr::case_when(
       .data[["r2_linear"]] <= 0.8 ~ "TRUE",
@@ -1071,7 +1150,7 @@ summary_data <- summary_data |>
                                 qc_sample_type_var = "QC_Sample_Type",
                                 signal_var = "Area")
   ) |> 
-  tidyr::unnest(.data$sample_summary) |>
+  tidyr::unnest(dplyr::all_of("sample_summary")) |>
   dplyr::mutate(
     `bqc_cv_>20%` = dplyr::case_when(
       .data[["bqc_cv_%"]] > 20 ~ "TRUE",
@@ -1524,7 +1603,8 @@ dilution_plot_table <- summary_data |>
                          "Vial_Position")
     )
   ) |> 
-  dplyr::select(-c("dilution_data", "sample_data"))
+  dplyr::select(-dplyr::any_of(c("dilution_data", 
+                                 "sample_data")))
 
 ```
 
@@ -2006,8 +2086,12 @@ injection_sequence_table <- raincloud_table |>
       ),
       .f = arrange_plots
   )) |>  
-  dplyr::select(-c("dilution_data","sample_data","no_rqc_data",
-                   "scatterplot_panel", "raincloud_panel"))
+  dplyr::select(
+    -dplyr::any_of(
+      c("dilution_data","sample_data","no_rqc_data",
+        "scatterplot_panel", "raincloud_panel")
+      )
+    )
 
 ```
 
@@ -2701,15 +2785,31 @@ attributes(injection_sequence_trellis$Precursor_Ion)
 Here is a trellis plot for the dilution curves.
 
 ```{r dilution curve trellis}
+#| column: screen-inset-right
 
 trelliscope_name <- "Dilution Plot"
+
+# Conditional cognostics must always be displayed as a label
+  trellis_labels <- c(
+    "Transition_Name"
+  ) %>% 
+    unique()
+
+# If we only have one label to display
+# Set it as NULL as it will automatically
+# appeared in state
+if(length(trellis_labels) == 1) {
+    trellis_labels <- NULL
+}
 
 dilution_trellis |> 
   trelliscopejs::trelliscope(
     name = trelliscope_name,
     panel_col = "dilution_panel",
     path = "Dilution_Plot_Folder",
-    state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
+    state = list(
+      labels = trellis_labels,
+      sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
     nrow = 2,
     ncol = 2,
     height = 520,
@@ -2726,15 +2826,31 @@ dilution_trellis |>
 Here is a trellis plot for the injection sequence plots.
 
 ```{r injection sequence plot trellis}
+#| column: screen-inset-right
 
 trelliscope_name <- "Injection Sequence Plot"
+
+# Conditional cognostics must always be displayed as a label
+  trellis_labels <- c(
+    "Transition_Name"
+  ) %>% 
+    unique()
+
+# If we only have one label to display
+# Set it as NULL as it will automatically
+# appeared in state
+if(length(trellis_labels) == 1) {
+    trellis_labels <- NULL
+}
 
 injection_sequence_trellis  |> 
   trelliscopejs::trelliscope(
     name = trelliscope_name,
     panel_col = "panel",
     path = "Injection_Sequence_Plot_Folder",
-    state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
+    state = list(
+      labels = trellis_labels,
+      sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
     nrow = 1,
     ncol = 1,
     height = 520,
@@ -2753,14 +2869,30 @@ It is also possible to combined the two trellis plots together as they have the 
 Unfortunately, the trellis plot does not seems to function properly in the Quarto document. As such, the code below is called interactively via the console.
 
 ```{r dilution and injection sequence trellis print code, eval=FALSE}
+
 trelliscope_name <- "Dilution Plot"
+
+# Conditional cognostics must always be displayed as a label
+  trellis_labels <- c(
+    "Transition_Name"
+  ) %>% 
+    unique()
+
+# If we only have one label to display
+# Set it as NULL as it will automatically
+# appeared in state
+if(length(trellis_labels) == 1) {
+    trellis_labels <- NULL
+}
 
 dilution_trellis |> 
   trelliscopejs::trelliscope(
     name = trelliscope_name,
     panel_col = "dilution_panel",
     path = "docs",
-    state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
+    state = list(
+      labels = trellis_labels,
+      sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
     nrow = 2,
     ncol = 2,
     height = 520,
@@ -2777,7 +2909,9 @@ injection_sequence_trellis  |>
     name = trelliscope_name,
     panel_col = "panel",
     path = "docs",
-    state = list(sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
+    state = list(
+      labels = trellis_labels,
+      sort = list(trelliscopejs::sort_spec("Transition_Name", dir = "asc"))),
     nrow = 1,
     ncol = 1,
     height = 520,
@@ -2799,33 +2933,12 @@ Below is just an embedded webpage of the trellis plot. It can be accessed via th
 
 # Package References
 
-```{r package references, results='asis'}
+```{r package references}
 #| code-fold: true
+#| output: asis
 
-get_citation <- function(package_name) {
-  transform_name <- package_name |> 
-    citation() |> 
-    format(style="text")
-  return(transform_name)
-} 
-
-packages <- c("base","here", "readr", "reactable",
-              "htmltools", "dplyr", "tidyr", "tibble",
-              "broom", "glue", "purrr", "scales",
-              "rgoslin", "plotly", "assertable",
-              "manipulateWidget", "trelliscopejs",
-              "report")
-
-table <- tibble::tibble(Packages = packages)
-
-table |>
-  dplyr::mutate(
-    transform_name = purrr::map_chr(.data[["Packages"]],
-                                    get_citation)
-  ) |> 
-  dplyr::pull(.data[["transform_name"]]) |> 
-  report::as.report_parameters()
-
+report::cite_packages() |> 
+  suppressWarnings()
 ```
 
 # References
