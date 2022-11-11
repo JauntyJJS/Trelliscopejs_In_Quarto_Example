@@ -1,9 +1,11 @@
 # Quarto Report Example With Plotly and Trelliscopejs
 
-Here is a report showing how to create injection sequence plot and
-dilution plot using [`plotly`](https://plotly.com/r/) for each
-transition. These multiple interactive plots will be displayed as a
-trellis using [`trelliscopejs`](https://hafen.github.io/trelliscopejs/).
+Here is a
+[report](https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Example/)
+showing how to create injection sequence plot and dilution plot using
+[`plotly`](https://plotly.com/r/) for each transition. These multiple
+interactive plots will be displayed as a trellis using
+[`trelliscopejs`](https://hafen.github.io/trelliscopejs/).
 
 Refer to the [NEWS.md
 file](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/blob/main/NEWS.md)
