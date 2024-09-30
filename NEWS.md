@@ -1,6 +1,11 @@
-# Trelliscopejs_In_Quarto_Example 1.0.2.9000 (development version)
+# Trelliscopejs_In_Quarto_Example 1.0.3.9000 (development version)
 
 ## TODO
+
+# Trelliscopejs_In_Quarto_Example 1.0.3
+
+* Updated R version and packages.
+* Added R package description using R package [`annotater`](https://annotater.liomys.mx/index.html)
 
 # Trelliscopejs_In_Quarto_Example 1.0.2
 

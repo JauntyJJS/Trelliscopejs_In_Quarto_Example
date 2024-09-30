@@ -92,53 +92,57 @@ The dilution plot, on the other hand, checks for possible signal enhancement or 
 
 # R Packages Used
 
-```{r load_library, results='asis'}
+```{r}
+#| label: load library
 #| code-fold: true
+#| output: asis
 
 # For session info and package reporting
-library("sessioninfo")
-library("quarto")
-library("report")
-library("knitr")
+library("sessioninfo") # R Session Information Posit RPSM v1.2.2
+library("quarto") # R Interface to 'Quarto' Markdown Publishing System Posit RPSM v1.4.4
+library("report") # Automated Reporting of Results and Statistical Models Posit RPSM v0.5.9
+library("knitr") # A General-Purpose Package for Dynamic Report Generation in R CRAN v1.48
 
 # For reading files
-library("readr")
+library("readr") # Read Rectangular Text Data CRAN v2.1.5
 
 # For interactive tables
-library("reactable")
-library("htmltools")
+library("reactable") # Interactive Data Tables for R Posit RPSM v0.4.4
+library("htmltools") # Tools for HTML Posit RPSM v0.5.8.1
 
 # For data wrangling
-library("dplyr")
-library("tidyr")
-library("tibble")
-library("purrr")
-library("broom")
-library("glue")
+library("dplyr") # A Grammar of Data Manipulation Posit RPSM v1.1.4
+library("tidyr") # Tidy Messy Data Posit RPSM v1.3.1
+library("tibble")# Simple Data Frames Posit RPSM v3.2.1
+library("purrr") # Functional Programming Tools Posit RPSM v1.0.2
+library("broom") # Convert Statistical Objects into Tidy Tibbles Posit RPSM v1.0.7
+library("glue") # Interpreted String Literals Posit RPSM v1.7.0
 
 # For palatte colours
-library("scales")
+library("scales") # Scale Functions for Visualization CRAN v1.3.0
 
 # For lipid annotation
 # Install from BioConductor
-library("rgoslin")
+library("rgoslin") # Lipid Shorthand Name Parsing and Normalization [github::lifs-tools/rgoslin] v2.2.0
 
 # For plotting
-library("plotly")
+library("plotly") # Create Interactive Web Graphics via 'plotly.js' Posit RPSM v4.10.4
 
 # For cognostics
-library("assertable")
+library("assertable") # Verbose Assertions for Tabular Data (Data.frames and Data.tables) Posit RPSM v0.2.8
 
 # For combining plotly plots
-library("manipulateWidget")
+library("manipulateWidget") # Add Even More Interactivity to Interactive Charts Posit RPSM v0.11.1
 
 # For trellis plot
-library("trelliscopejs")
+library("trelliscopejs") # Create Interactive Trelliscope Displays Posit RPSM v0.2.6
 
 ```
 
-```{r See packages info}
+```{r}
+#| label: see spackages info
 #| code-fold: true
+
 r_package_table <- sessioninfo::package_info()
 rownames(r_package_table) <- NULL
 
@@ -167,7 +171,8 @@ r_package_table |>
 
 # R Platform Information
 
-```{r See session info}
+```{r}
+#| label: see session info
 #| code-fold: true
 
 # Taken from https://github.com/r-lib/sessioninfo/issues/75
@@ -220,7 +225,9 @@ We read the transition's peak area measurement using Reversed-Phase Ultra High-P
 
 The first column is the name of the sample. Subsequent columns are the transition's integrated peak areas.
 
-```{r read area data}
+```{r}
+#| label: read area data
+
 area_data <- readr::read_csv(
   file = "https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Area.csv",
   show_col_types = FALSE)
@@ -228,7 +235,8 @@ area_data <- readr::read_csv(
 
 Here is how the data (first 30 rows) looks like
 
-```{r preview area data}
+```{r}
+#| label: preview area data
 #| code-fold: true
 
 area_data[1:30,] |> 
@@ -255,7 +263,9 @@ area_data[1:30,] |>
 
 The transition annotation provides information about the given transitions that has been measured.
 
-```{r read transition name annotation}
+```{r}
+#| label: read transition name annotation
+
 transition_name_annot <- readr::read_csv(
   file = "https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Transition_Name_Annot.csv",
   show_col_types = FALSE)
@@ -280,7 +290,8 @@ Here are the column descriptions.
 
 Here is how the data looks like
 
-```{r preview transition name annotation}
+```{r}
+#| label: preview transition name annotation
 #| code-fold: true
 
 transition_name_annot |> 
@@ -306,7 +317,9 @@ transition_name_annot |>
 
 The sample annotation provides information about the given samples that has been measured.
 
-```{r read sample annotation}
+```{r}
+#| label: read sample annotation
+
 sample_annot <- readr::read_csv(
   file = "https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Sample_Annot.csv",
   show_col_types = FALSE)
@@ -344,7 +357,8 @@ Here are the column descriptions.
 
 Here is how it looks like
 
-```{r preview sample annotation}
+```{r}
+#| label: preview sample annotation
 #| code-fold: true
 
 sample_annot |> 
@@ -370,7 +384,9 @@ sample_annot |>
 
 The dilution annotation provides information about the given RQC samples that has been measured.
 
-```{r read dilution annotation}
+```{r}
+#| label: read dilution annotation
+
 dilution_annot <- readr::read_csv(
   file = "https://raw.github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Dilution_Annot.csv",
   show_col_types = FALSE)
@@ -387,7 +403,8 @@ Here are the column descriptions.
 
 Here is how it looks like
 
-```{r preview dilution annotation}
+```{r}
+#| label: preview dilution annotation
 #| code-fold: true
 
 dilution_annot |> 
@@ -418,13 +435,14 @@ We first merge the peak area data with the sample annotation. Next, we created a
 
 `sample_data` will be used later to do statistical analysis for each QC sample type.
 
-```{r merge and nest sample annotation data}
+```{r}
+#| label: merge and nest sample annotation data
 
 sample_annot_column_names <- sample_annot |> 
   colnames()
 
 nested_sample_data <- sample_annot |> 
-  dplyr::inner_join(y = area_data, by ="Sample_Name") |> 
+  dplyr::inner_join(y = area_data, by = "Sample_Name") |> 
   tidyr::pivot_longer(cols = -dplyr::any_of(sample_annot_column_names),
                       names_to = "Transition_Name", 
                       values_to = "Area") |> 
@@ -437,7 +455,8 @@ nested_sample_data <- sample_annot |>
 
 Here is a preview of the first five rows of the `nested_sample_data`. For each `sample_data` of a given transition name, we display the first ten rows.
 
-```{r preview nested sample annotation}
+```{r}
+#| label: preview nested sample annotation
 #| code-fold: true
 
 nested_sample_data[1:5,] |>
@@ -471,7 +490,8 @@ We first merge the peak area data with the dilution and sample annotation. Next,
 
 `dilution_data` will be used later to do dilution curve related analysis for each transition.
 
-```{r merge and nest sample dilution data}
+```{r}
+#| label: merge and nest sample dilution data
 
 sample_annot_column_names <- sample_annot |> 
   colnames()
@@ -480,8 +500,8 @@ dilution_annot_column_names <- dilution_annot |>
   colnames()
 
 nested_dilution_data <- dilution_annot |> 
-  dplyr::inner_join(y = sample_annot, by ="Sample_Name") |>
-  dplyr::inner_join(y = area_data, by ="Sample_Name") |> 
+  dplyr::inner_join(y = sample_annot, by = "Sample_Name") |>
+  dplyr::inner_join(y = area_data, by = "Sample_Name") |> 
   tidyr::pivot_longer(cols = -dplyr::any_of(c(sample_annot_column_names,
                                               dilution_annot_column_names)),
                       names_to = "Transition_Name", 
@@ -494,7 +514,8 @@ nested_dilution_data <- dilution_annot |>
 
 Here is a preview of the first five rows of the `nested_dilution_data`. For each `dilution_data` of a given transition name, we display the first five rows.
 
-```{r preview nested dilution annotation}
+```{r}
+#| label: preview nested dilution annotation
 #| code-fold: true
 
 nested_dilution_data[1:5,] |>
@@ -525,16 +546,18 @@ nested_dilution_data[1:5,] |>
 
 We join the two nested data `sample_data` and `dilution_data` together
 
-```{r merge nested data toghether}
+```{r}
+#| label: merge nested data together
 
 nested_data <- nested_sample_data |> 
-  dplyr::inner_join(y = nested_dilution_data, by ="Transition_Name")
+  dplyr::inner_join(y = nested_dilution_data, by = "Transition_Name")
 
 ```
 
 Here is a preview of the first five rows of the `nested_data`.
 
-```{r preview nested data}
+```{r}
+#| label: preview nested data
 #| code-fold: true
 
 nested_data[1:5,] |>
@@ -578,7 +601,8 @@ We now add the annotations for each transitions from `transition_name_annot` and
 
 We first join the nested_data with our transition annotations.
 
-```{r add transition_name_annot annotation}
+```{r}
+#| label: add transition_name_annot annotation
 
 annotated_data <- nested_data |> 
   dplyr::inner_join(y = transition_name_annot, by = "Transition_Name")
@@ -587,7 +611,8 @@ annotated_data <- nested_data |>
 
 Here is a preview of the first five rows of the `annotated_data`.
 
-```{r preview annotated data 1}
+```{r}
+#| label: preview annotated data 1
 #| code-fold: true
 
 annotated_data[1:5,] |>
@@ -631,7 +656,8 @@ The R package [rgoslin](https://github.com/lifs-tools/rgoslin) is useful in gett
 
 Below is an code example (not part of the pipeline) on how [rgoslin](https://github.com/lifs-tools/rgoslin) can be used
 
-```{r rgoslin demo}
+```{r}
+#| label: rgoslin demo
 
 rgoslin_example <- annotated_data |> 
   dplyr::select(dplyr::all_of("For_Rgoslin")) |> 
@@ -658,7 +684,8 @@ rgoslin_example <- annotated_data |>
 
 Here is a preview of `rgoslin_example`.
 
-```{r preview rgoslin demo}
+```{r}
+#| label: preview rgoslin demo
 #| code-fold: true
 
 rgoslin_example |>
@@ -696,10 +723,13 @@ The following columns are kept instead.
 | Functional.Class.Abbr     | Abbreviation used to describe the lipid's functional class based on the grammar used.                                                                       |
 | Functional.Class.Synonyms | Alternative abbreviations used to describe the lipid's functional class.                                                                                    |
 
-```{r add rgoslin annotation, warning=FALSE, message=FALSE}
+```{r}
+#| label: add rgoslin annotation
+#| warning: false
+#| message: false
 
 annotated_data <- nested_data |> 
-  dplyr::inner_join(y = transition_name_annot, by ="Transition_Name")
+  dplyr::inner_join(y = transition_name_annot, by = "Transition_Name")
 
 annotated_data_cols <- colnames(annotated_data)
 
@@ -733,7 +763,8 @@ annotated_data <- annotated_data |>
 
 Here is a preview of the first five rows of the `annotated_data`.
 
-```{r preview annotated data 2}
+```{r}
+#| label: preview annotated data 2
 #| code-fold: true
 
 annotated_data[1:5,] |>
@@ -791,7 +822,8 @@ The following statistics are calculated from `dilution_data`.
 
 The relevant functions to do these calculations are as follows
 
-```{r dilution summary functions}
+```{r}
+#| label: dilution summary functions
 #| code-fold: true
 
 #' @title Create Linear Model
@@ -959,7 +991,8 @@ get_dilution_summary <- function(dilution_data,
 
 Here are the codes for our workflow.
 
-```{r calculate dilution statistics}
+```{r}
+#| label: calculate dilution statistics
 
 summary_data <- annotated_data |> 
   dplyr::mutate(
@@ -981,7 +1014,8 @@ summary_data <- annotated_data |>
 
 Here is a preview of the first five rows of the `summary_data`.
 
-```{r preview dilution statistics}
+```{r}
+#| label: preview dilution statistics
 #| code-fold: true
 
 summary_data[1:5,] |>
@@ -1056,7 +1090,8 @@ The following statistics are calculated from `sample_data`.
 
 The relevant functions to do these calculations are as follows.
 
-```{r sample summary functions}
+```{r}
+#| label: sample summary functions
 #| code-fold: true
 
 #' Function used to calculate statistics summary (RSD,Signal to Blank Ratio) of a given input numeric vector
@@ -1142,7 +1177,8 @@ get_qc_sample_summary <- function(lipid_data,
 
 Here are the codes for our workflow.
 
-```{r calculate QC sample statistics}
+```{r}
+#| label: calculate QC sample statistics
 
 summary_data <- summary_data |> 
   dplyr::mutate(
@@ -1174,7 +1210,8 @@ summary_data <- summary_data |>
 
 Here is a preview of the first five rows of the `summary_data`.
 
-```{r preview QC sample statistics}
+```{r}
+#| label: preview QC sample statistics
 #| code-fold: true
 
 summary_data[1:5,] |>
@@ -1223,7 +1260,10 @@ In this section, we create the palette for our dilution plots as well as our inj
 
 The relevant utility functions to do this are as follows.
 
-```{r palatte utility functions, warning=FALSE, message=FALSE}
+```{r}
+#| label: palatte utility functions
+#| warning: false
+#| message: false
 #| code-fold: true
 
 #' @title Create Cyclic Character Sequence
@@ -1269,7 +1309,8 @@ create_char_seq <- function(group_name, output_length) {
 
 We create a colour for each dilution batch name. The palette for the dilution plot are created as such.
 
-```{r create dilution pal}
+```{r}
+#| label: create dilution pal
 
 # Get the dilution batch name from dilution_annot
 dilution_batch_name <- dilution_annot |> 
@@ -1289,7 +1330,10 @@ scales::show_col(dilution_pal)
 
 We create a colour for each QC sample type. The palette for the injection sequence plot are created as such.
 
-```{r create qc sample type pal, warning=FALSE, message=FALSE}
+```{r}
+#| label: create qc sample type pal
+#| warning: false
+#| message: false
 
 qc_sample_type <- c("SPL","TQC", "BQC","NIST", 
                     "LTR", "PBLK","RQC")
@@ -1310,7 +1354,8 @@ With the palette created, we will create a dilution plot for each transition.
 
 The relevant functions to do this plot are as follows.
 
-```{r dilution plot functions}
+```{r}
+#| label: dilution plot functions
 #| code-fold: true
 
 #' @title Plot Dilution Curve Using `plotly`
@@ -1576,7 +1621,8 @@ plot_dil_curve_plotly <- function(dilution_data,
 
 Here is the code that plots the dilution curve for each transition. A new column `dilution_panel` is created to contain such a plot. Both nested data `dilution_data` and `sample_data` are removed in the process.
 
-```{r plotting dilution}
+```{r}
+#| label: plotting dilution
 
 dilution_plot_table <- summary_data |> 
   dplyr::mutate(
@@ -1611,7 +1657,8 @@ dilution_plot_table <- summary_data |>
 
 Here is a preview of the dilution plot of first row of the `dilution_plot_table`.
 
-```{r preview dilution plot}
+```{r}
+#| label: preview dilution plot
 #| code-fold: true
 
 manipulateWidget::combineWidgets(ncol = 2,
@@ -1630,7 +1677,8 @@ The injection sequence plot consist of a scatter plot and a raincloud plot.
 
 The relevant function to do the scatter plot is as follows.
 
-```{r plot scatter plot functions}
+```{r}
+#| label: plot scatter plot functions
 #| code-fold: true
 
 #' @title Plot Scatter Plot Using `plotly`
@@ -1801,7 +1849,8 @@ plot_scatterplot_plotly <- function(scatterplot_data,
 
 The first step is to create a scatter plot (Area vs Injection Sequence) for each transition. A new column `scatterplot_panel` is created to contain such a plot.
 
-```{r plotting scatter plot}
+```{r}
+#| label: plotting scatter plot
 
 scatterplot_table <- summary_data |>  
   dplyr::mutate(
@@ -1830,17 +1879,20 @@ scatterplot_table <- summary_data |>
 
 Here is a preview of the scatter plot of first row of the `scatterplot_table`.
 
-```{r preview scatter plot}
+```{r}
+#| label: preview scatter plot
 #| code-fold: true
  
 scatterplot_table$scatterplot_panel[[1]]
+
 ```
 
 ## Raincloud Plot
 
 The relevant utility function is as follows.
 
-```{r raincloud plot utility functions}
+```{r}
+#| label: raincloud plot utility functions
 #| code-fold: true
 
 remove_rqc <- function(input_data) {
@@ -1851,11 +1903,13 @@ remove_rqc <- function(input_data) {
   return(input_data)
   
 }
+
 ```
 
 The relevant function to do the raincloud plot is as follows.
 
-```{r plot raincloud plot functions}
+```{r}
+#| label: plot raincloud plot functions
 #| code-fold: true
 
 #' @title Plot Raincloud Plot Using `plotly`
@@ -2016,7 +2070,9 @@ plot_raincloud_plotly <- function(raincloud_data,
 
 The second step is to create a raincloud plot (QC Sample Type (without RQC) vs Injection Sequence) for each transition. A new column called `no_rqc_data` is created from `sample_data` to filter out the RQC samples. The filtered samples are then used to create the plot. A new column `raincloud_panel` is created to contain such a plot.
 
-```{r plotting raincloud plot, warning=FALSE}
+```{r}
+#| label: plotting raincloud plot
+#| warning: false
 
 raincloud_table <- scatterplot_table |>
   dplyr::mutate(
@@ -2046,17 +2102,20 @@ raincloud_table <- scatterplot_table |>
 
 Here is a preview of the raincloud plot of first row of the `raincloud_table`.
 
-```{r preview raincloud plot}
+```{r}
+#| label: preview raincloud plot
 #| code-fold: true
  
 raincloud_table$raincloud_panel[[1]]
+
 ```
 
 ## Injection Sequence Plot
 
 The relevant utility functions are as follows.
 
-```{r injection sequence plot utility functions}
+```{r}
+#| label: injection sequence plot utility functions
 #| code-fold: true
 
 arrange_plots <- function(scatterplot_panel, raincloud_panel) {
@@ -2076,7 +2135,9 @@ arrange_plots <- function(scatterplot_panel, raincloud_panel) {
 
 The last step is to combine the two plots together. `dilution_data`, `sample_data`, `no_rqc_data`, `scatterplot_panel` and `raincloud_panel` are removed in the process.
 
-```{r plotting injection sequence plot, warning=FALSE}
+```{r}
+#| label: plotting injection sequence plot
+#| warning: false
 
 injection_sequence_table <- raincloud_table |> 
   dplyr::mutate(
@@ -2098,10 +2159,12 @@ injection_sequence_table <- raincloud_table |>
 
 Here is a preview of the injection sequence plot of first row of the `injection_sequence_table`.
 
-```{r preview injection sequence plot}
+```{r}
+#| label: preview injection sequence plot
 #| code-fold: true
  
 injection_sequence_table$panel[[1]]
+
 ```
 
 # Cognostics
@@ -2118,7 +2181,8 @@ The cognostics dataframe consist of three components
 
 The relevant functions to convert all columns, except the panel variable, to cognostics objects are as follows.
 
-```{r cognostics functions}
+```{r}
+#| label: cognostics functions
 #| code-fold: true
 
 #' @title Validate Cognostics Data
@@ -2379,7 +2443,8 @@ Given a column name, we need to provide
 
 Here are the relevant functions to create our meta information tibble.
 
-```{r default cognostics functions}
+```{r}
+#| label: default cognostics functions
 #| code-fold: true
 
 #' @title Create Transition Name Annotation
@@ -2679,7 +2744,8 @@ create_default_cog_df <- function() {
 
 Here is a preview of the meta information tibble
 
-```{r preview meta information}
+```{r}
+#| label: preview meta information
 #| code-fold: true
 
 create_default_cog_df() |> 
@@ -2702,82 +2768,110 @@ We use the function `convert_to_cog` which uses the default `cog_df` created by 
 
 Here are the attributes of some columns in `dilution_plot_table` before conversion to cognostics.
 
-```{r before dilution curve cognostics}
+```{r}
+#| label: before dilution curve cognostics
+
 attributes(dilution_plot_table$Transition_Name)
 attributes(dilution_plot_table$Lipid_Name)
 attributes(dilution_plot_table$Precursor_Ion)
 attributes(dilution_plot_table$dilution_panel)
+
 ```
 
 We convert each column in `dilution_plot_table` to relevant cognostics using the function `convert_to_cog`. With `Transition_Name` as a conditioning variable, `dilution_panel` as a panel variable.
 
-```{r dilution curve cognostics}
+```{r}
+#| label: dilution curve cognostics
 
 dilution_trellis <- dilution_plot_table |> 
     convert_to_cog(grouping_variable = c("Transition_Name"),
                    panel_variable = "dilution_panel")
+
 ```
 
 Here are the attributes of some columns in `dilution_plot_table` after conversion to cognostics. Observe that the attributes of the columns are different.
 
 For the column labelled as conditioning (grouping) variable column labelled we have.
 
-```{r after dilution curve cognostics 1}
+```{r}
+#| label: after dilution curve cognostics 1
+
 attributes(dilution_trellis$Transition_Name)
+
 ```
 
 For the column labelled as a panel variable, we have
 
-```{r after dilution curve cognostics 2}
+```{r}
+#| label: after dilution curve cognostics 2
+
 attributes(dilution_trellis$dilution_panel)
+
 ```
 
 For the rest of the column converted to a common cognostics, we have
 
-```{r after dilution curve cognostics 3}
+```{r}
+#| label: after dilution curve cognostics 3
+
 attributes(dilution_trellis$Lipid_Name)
 attributes(dilution_trellis$Precursor_Ion)
+
 ```
 
 ### Injection Sequence Plots
 
 Here are the attributes of some columns in `injection_sequence_table` before conversion to cognostics.
 
-```{r before injection sequence plot cognostics}
+```{r}
+#| label: before injection sequence plot cognostics
+
 attributes(injection_sequence_table$Transition_Name)
 attributes(injection_sequence_table$Lipid_Name)
 attributes(injection_sequence_table$Precursor_Ion)
 attributes(injection_sequence_table$panel)
+
 ```
 
 We convert each column in `injection_sequence_table` to relevant cognostics using the function `convert_to_cog`. With `Transition_Name` as a conditioning variable, `panel` as a panel variable.
 
-```{r injection sequence plot cognostics}
+```{r}
+#| label: injection sequence plot cognostics
 
 injection_sequence_trellis <- injection_sequence_table |> 
     convert_to_cog(grouping_variable = c("Transition_Name"),
                    panel_variable = "panel")
+
 ```
 
 Here are the attributes of some columns in `injection_sequence_table` after conversion to cognostics. Observe that the attributes of the columns are different.
 
 For the column labelled as conditioning (grouping) variable column labelled we have.
 
-```{r after injection sequence plot cognostics 1}
+```{r}
+#| label: after injection sequence plot cognostics 1
+
 attributes(injection_sequence_trellis$Transition_Name)
+
 ```
 
 For the column labelled as a panel variable, we have
 
-```{r after injection sequence plot cognostics 2}
+```{r}
+#| label: after injection sequence plot cognostics 2
+
 attributes(injection_sequence_trellis$panel)
+
 ```
 
 For the rest of the column converted to a common cognostics, we have
 
-```{r after injection sequence plot cognostics 3}
+```{r}
+#| label: after injection sequence plot cognostics 3
+
 attributes(injection_sequence_trellis$Lipid_Name)
 attributes(injection_sequence_trellis$Precursor_Ion)
+
 ```
 
 :::
@@ -2788,7 +2882,8 @@ attributes(injection_sequence_trellis$Precursor_Ion)
 
 Here is a trellis plot for the dilution curves.
 
-```{r dilution curve trellis}
+```{r}
+#| label: dilution curve trellis
 #| column: screen-inset-right
 
 trelliscope_name <- "Dilution Plot"
@@ -2829,7 +2924,8 @@ dilution_trellis |>
 
 Here is a trellis plot for the injection sequence plots.
 
-```{r injection sequence plot trellis}
+```{r}
+#| label: injection sequence plot trellis
 #| column: screen-inset-right
 
 trelliscope_name <- "Injection Sequence Plot"
@@ -2872,7 +2968,9 @@ It is also possible to combined the two trellis plots together as they have the 
 
 Unfortunately, the trellis plot does not seems to function properly in the Quarto document. As such, the code below is called interactively via the console.
 
-```{r dilution and injection sequence trellis print code, eval=FALSE}
+```{r}
+#| label: dilution and injection sequence trellis print code
+#| eval: false
 
 trelliscope_name <- "Dilution Plot"
 
@@ -2932,12 +3030,13 @@ A `docs` folder will be created. It is currently placed in this [GitHub reposito
 Below is just an embedded webpage of the trellis plot. It can be accessed via this [GitHub Page link](https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Supplementary1/).
 
 ```{=html}
-<iframe width="780" height="500" src="https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Supplementary1/"></iframe>
+<iframe width="1100" height="520" src="https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Supplementary1/"></iframe>
 ```
 
 # Package References
 
-```{r package references}
+```{r}
+#| label: package references
 #| code-fold: true
 #| output: asis
 
@@ -2946,3 +3045,4 @@ report::cite_packages() |>
 ```
 
 # References
+
