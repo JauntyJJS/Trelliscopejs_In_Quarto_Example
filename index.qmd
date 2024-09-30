@@ -2817,7 +2817,7 @@ dilution_trellis |>
     nrow = 2,
     ncol = 2,
     height = 520,
-    width = 1100,
+    width = 1200,
     self_contained = FALSE,
     thumb = FALSE,
     auto_cog = FALSE
@@ -2858,7 +2858,7 @@ injection_sequence_trellis  |>
     nrow = 1,
     ncol = 1,
     height = 520,
-    width = 1100,
+    width = 1200,
     self_contained = FALSE,
     thumb = FALSE,
     auto_cog = FALSE
