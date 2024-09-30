@@ -99,6 +99,7 @@ The dilution plot, on the other hand, checks for possible signal enhancement or 
 library("sessioninfo")
 library("quarto")
 library("report")
+library("knitr")
 
 # For reading files
 library("readr")
@@ -423,7 +424,7 @@ sample_annot_column_names <- sample_annot |>
   colnames()
 
 nested_sample_data <- sample_annot |> 
-  dplyr::inner_join(y = area_data, by="Sample_Name") |> 
+  dplyr::inner_join(y = area_data, by ="Sample_Name") |> 
   tidyr::pivot_longer(cols = -dplyr::any_of(sample_annot_column_names),
                       names_to = "Transition_Name", 
                       values_to = "Area") |> 
@@ -479,8 +480,8 @@ dilution_annot_column_names <- dilution_annot |>
   colnames()
 
 nested_dilution_data <- dilution_annot |> 
-  dplyr::inner_join(y = sample_annot, by="Sample_Name") |>
-  dplyr::inner_join(y = area_data, by="Sample_Name") |> 
+  dplyr::inner_join(y = sample_annot, by ="Sample_Name") |>
+  dplyr::inner_join(y = area_data, by ="Sample_Name") |> 
   tidyr::pivot_longer(cols = -dplyr::any_of(c(sample_annot_column_names,
                                               dilution_annot_column_names)),
                       names_to = "Transition_Name", 
@@ -527,7 +528,7 @@ We join the two nested data `sample_data` and `dilution_data` together
 ```{r merge nested data toghether}
 
 nested_data <- nested_sample_data |> 
-  dplyr::inner_join(y = nested_dilution_data, by="Transition_Name")
+  dplyr::inner_join(y = nested_dilution_data, by ="Transition_Name")
 
 ```
 
@@ -580,7 +581,7 @@ We first join the nested_data with our transition annotations.
 ```{r add transition_name_annot annotation}
 
 annotated_data <- nested_data |> 
-  dplyr::inner_join(y = transition_name_annot, by="Transition_Name")
+  dplyr::inner_join(y = transition_name_annot, by = "Transition_Name")
 
 ```
 
@@ -698,7 +699,7 @@ The following columns are kept instead.
 ```{r add rgoslin annotation, warning=FALSE, message=FALSE}
 
 annotated_data <- nested_data |> 
-  dplyr::inner_join(y = transition_name_annot, by="Transition_Name")
+  dplyr::inner_join(y = transition_name_annot, by ="Transition_Name")
 
 annotated_data_cols <- colnames(annotated_data)
 
@@ -1068,10 +1069,10 @@ The relevant functions to do these calculations are as follows.
 get_sample_description <- function(lipid_data_vector, prepend_string) {
 
   description_table <- tibble::tibble(
-    mean = lipid_data_vector |> mean(na.rm=TRUE),
-    median = lipid_data_vector |> stats::median(na.rm=TRUE),
-    sd = lipid_data_vector |> stats::sd(na.rm=TRUE),
-    mad = lipid_data_vector |> stats::mad(na.rm=TRUE,constant = 1),
+    mean = lipid_data_vector |> mean(na.rm = TRUE),
+    median = lipid_data_vector |> stats::median(na.rm = TRUE),
+    sd = lipid_data_vector |> stats::sd(na.rm = TRUE),
+    mad = lipid_data_vector |> stats::mad(na.rm = TRUE,constant = 1),
   ) |>
     dplyr::mutate(
       `cv_%` = .data$sd/.data$mean * 100,
@@ -1099,7 +1100,7 @@ get_qc_sample_summary <- function(lipid_data,
   spl_summary <- lipid_data |> 
     dplyr::filter(.data[[qc_sample_type_var]] == "SPL") |> 
     dplyr::pull(.data[[signal_var]]) |> 
-    get_sample_description(prepend_string= "spl")
+    get_sample_description(prepend_string = "spl")
   
   bqc_summary <- lipid_data |> 
     dplyr::filter(.data[[qc_sample_type_var]] == "BQC") |> 
@@ -1114,12 +1115,12 @@ get_qc_sample_summary <- function(lipid_data,
   tqc_median <- lipid_data |> 
     dplyr::filter(.data[[qc_sample_type_var]] %in% c("TQC")) |> 
     dplyr::pull(!!signal_var) |> 
-    stats::median(na.rm=TRUE)
+    stats::median(na.rm = TRUE)
   
   pblk_median <- lipid_data |> 
     dplyr::filter(.data[[qc_sample_type_var]] == "PBLK") |> 
     dplyr::pull(!!signal_var) |> 
-    stats::median(na.rm=TRUE)
+    stats::median(na.rm = TRUE)
   
   `pblk_to_tqc_ratio_%` <- pblk_median/tqc_median * 100
   
@@ -1415,10 +1416,10 @@ plot_dil_curve_plotly <- function(dilution_data,
                       showlegend = show_legend,
                       inherit = FALSE)
   
-  if(nrow(dilution_data) > 3) {
+  if (nrow(dilution_data) > 3) {
 
      # When we need to plot a horizontal line
-     if(stats::sd(dilution_data[[signal_var]]) == 0) {
+     if (stats::sd(dilution_data[[signal_var]]) == 0 ) {
 
       min_x <- min(dilution_data[[conc_var]], na.rm = TRUE)
       max_x <- max(dilution_data[[conc_var]], na.rm = TRUE)
@@ -1490,18 +1491,18 @@ plot_dil_curve_plotly <- function(dilution_data,
   
   # Create x axis title
   # If conc_var_units is empty, do not add brackets
-  if(x_axis_title != "") {
+  if (x_axis_title != "") {
     x_title <- x_axis_title
   } else {
     x_title <- conc_var
   }
 
-  if(conc_var_units != "") {
+  if (conc_var_units != "") {
     x_title <- paste0(x_title, " (",  conc_var_units, ")")
   }
 
   # Create y axis title
-  if(y_axis_title != ""){
+  if (y_axis_title != "") {
     y_title <- y_axis_title
   } else {
     y_title <- signal_var
@@ -1552,12 +1553,12 @@ plot_dil_curve_plotly <- function(dilution_data,
     )
 
   # Add the y axis title
-  if(isTRUE(show_y_axis_title)) {
+  if (isTRUE(show_y_axis_title)) {
 
     p <- p |>
       plotly::add_annotations(
-        x=0,
-        y=1,
+        x = 0,
+        y = 1,
         xref = "paper",
         yref = "paper",
         xanchor = "left",
@@ -1688,7 +1689,7 @@ plot_scatterplot_plotly <- function(scatterplot_data,
      <br>{y_axis_var}: {format(scatterplot_data[[y_axis_var]], big.mark = ",", nsmall = 1)}"
   )
   
-  for(things in annotation_var) {
+  for (things in annotation_var) {
     text_input <- glue::glue("{text_input}\\
                               <br>{things}: {scatterplot_data[[things]]}")
   }
@@ -1763,7 +1764,7 @@ plot_scatterplot_plotly <- function(scatterplot_data,
                    )
   
   # Add the LOD line
-  if(!isTRUE(is.na(lod_val))) {
+  if (!isTRUE(is.na(lod_val))) {
     
     scatter <- scatter |> 
       plotly::add_trace(data = scatterplot_data,
@@ -1779,11 +1780,11 @@ plot_scatterplot_plotly <- function(scatterplot_data,
   }
     
   # Add the y axis title
-  if(isTRUE(show_y_axis_title)) {
+  if (isTRUE(show_y_axis_title)) {
     scatter <- scatter |>
       plotly::add_annotations(
         x = 0,
-        y= 1,
+        y = 1,
         xref = "paper",
         yref = "paper",
         yanchor = "bottom",
@@ -1910,7 +1911,7 @@ plot_raincloud_plotly <- function(raincloud_data,
      <br>{y_axis_var}: {format(raincloud_data[[y_axis_var]], big.mark = ",", nsmall = 1)}"
   )
   
-  for(things in annotation_var) {
+  for (things in annotation_var) {
     text_input <- glue::glue("{text_input}\\
                               <br>{things}: {raincloud_data[[things]]}")
   }
@@ -1995,11 +1996,11 @@ plot_raincloud_plotly <- function(raincloud_data,
                    plot_bgcolor = "rgb(229,229,229)"
                    )
   
-  if(isTRUE(show_y_axis_title)) {
+  if (isTRUE(show_y_axis_title)) {
     violin <- violin |>
       plotly::add_annotations(
         x = 0,
-        y= 1,
+        y = 1,
         xref = "paper",
         yref = "paper",
         yanchor = "bottom",
@@ -2293,7 +2294,7 @@ convert_to_cog <- function(summary_table, cog_df = NULL,
                               only_colnames = FALSE, quiet = TRUE)
 
   # Check if panel_variable is also a grouping variable
-  if(isTRUE(panel_variable %in% grouping_variable)){
+  if (isTRUE(panel_variable %in% grouping_variable)) {
     stop(paste("panel_variable", panel_variable,
                "cannot be a grouping_variable")
          )
@@ -2306,7 +2307,7 @@ convert_to_cog <- function(summary_table, cog_df = NULL,
 
   # Separate the panel variables if it is in summary_table
   panel_df <- NULL
-  if(!is.null(panel_variable)) {
+  if (!is.null(panel_variable)) {
     panel_df <- summary_table |>
       dplyr::select(dplyr::any_of(c(grouping_variable,
                                     panel_variable)))
@@ -2331,7 +2332,7 @@ convert_to_cog <- function(summary_table, cog_df = NULL,
                                  needs_cond = TRUE, needs_key = FALSE)
 
   #Convert panel variables if any to trelliscope_panels
-  if(!is.null(panel_df) && ncol(panel_df) != length(grouping_variable)) {
+  if (!is.null(panel_df) && ncol(panel_df) != length(grouping_variable)) {
 
     # Ensure that the grouping variable is converted to
     # conditional columns
@@ -2345,8 +2346,11 @@ convert_to_cog <- function(summary_table, cog_df = NULL,
       dplyr::bind_cols(panel_df |>
                          dplyr::select(dplyr::any_of(c(panel_variable)))
       ) |>
-      dplyr::mutate(dplyr::across(dplyr::all_of(panel_variable),
-                    ~structure(.x,class = c("trelliscope_panels","list")))
+      dplyr::mutate(
+        dplyr::across(
+          .cols = dplyr::all_of(panel_variable),
+          .fns  = \(x) structure(x, class = c("trelliscope_panels","list"))
+        )
       )
 
     # Panel_df to do a left join with dilution summary
@@ -2798,7 +2802,7 @@ trelliscope_name <- "Dilution Plot"
 # If we only have one label to display
 # Set it as NULL as it will automatically
 # appeared in state
-if(length(trellis_labels) == 1) {
+if (length(trellis_labels) == 1) {
     trellis_labels <- NULL
 }
 
@@ -2839,7 +2843,7 @@ trelliscope_name <- "Injection Sequence Plot"
 # If we only have one label to display
 # Set it as NULL as it will automatically
 # appeared in state
-if(length(trellis_labels) == 1) {
+if (length(trellis_labels) == 1) {
     trellis_labels <- NULL
 }
 
@@ -2881,7 +2885,7 @@ trelliscope_name <- "Dilution Plot"
 # If we only have one label to display
 # Set it as NULL as it will automatically
 # appeared in state
-if(length(trellis_labels) == 1) {
+if (length(trellis_labels) == 1) {
     trellis_labels <- NULL
 }
 

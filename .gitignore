@@ -1,13 +1,15 @@
 .Rproj.user
 .RData
 .Ruserdata
-
+.Renviron
 .Rhistory
 .Rprofile
 
 docs
 renv
-.Rdata
 .httr-oauth
 .DS_Store
 *.zip
+
+Dilution_Plot_Folder
+Injection_Sequence_Plot_Folder
