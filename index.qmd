@@ -1,5 +1,6 @@
 ---
 title: "Quarto Report Example With Plotly and Trelliscopejs"
+subtitle: "`r verbaliseR::prettify_date(Sys.Date(), uk_or_us = 'UK')`"
 bibliography: utils/bibliography.bib
 csl: utils/f1000research.csl
 knitr:
@@ -50,11 +51,11 @@ format:
     smooth-scroll: true
 ---
 
-Written by Jeremy Selva [{{< fa solid link >}}](https://jeremy-selva.netlify.app/) [{{< fa brands github >}}](https://github.com/JauntyJJS) [{{< fa brands linkedin >}}](https://www.linkedin.com/in/jeremy-selva-085b9112a) [{{< fa brands twitter >}}](https://twitter.com/jauntyjjs)
+Written by Jeremy Selva [`r fontawesome::fa(name = "link")`](https://jeremy-selva.netlify.app/){target="_blank"} [`r fontawesome::fa(name = "linkedin")`](https://www.linkedin.com/in/jeremy-selva-085b9112a/){target="_blank"} [`r fontawesome::fa(name = "github")`](https://github.com/JauntyJJS){target="_blank"} [`r fontawesome::fa(name = "fab fa-x-twitter")`](https://twitter.com/JauntyJJS){target="_blank"}
 
 # Introduction
 
-Here is a report showing how to create injection sequence plot and dilution plot using [`plotly`](https://plotly.com/r/) for each Multiple Reaction Monitoring (MRM) transition in Mass Spectrometry.
+Here is a report showing how to create injection sequence plot and dilution plot using [`plotly`](https://plotly.com/r/){target="_blank"} for each Multiple Reaction Monitoring (MRM) transition in Mass Spectrometry.
 
 ::: panel-tabset
 
@@ -66,9 +67,9 @@ Here is a report showing how to create injection sequence plot and dilution plot
 
 :::
 
-These multiple interactive plots will be displayed as a trellis using [`trelliscopejs`](https://hafen.github.io/trelliscopejs/).
+These multiple interactive plots will be displayed as a trellis using [`trelliscopejs`](https://hafen.github.io/trelliscopejs/){target="_blank"}.
 
-The source code used to generate this report can be found in this [GitHub page](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example).
+The source code used to generate this report can be found in this [GitHub page](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Example){target="_blank"}.
 
 # Background
 
@@ -78,7 +79,7 @@ Here is some background knowledge about the use of the quality control (QC) plot
 
 The peak area data used to generate these quality control plots comes from a targeted lipidomics experiment using Reversed-Phase Ultra High-Performance Liquid Chromatography/ Mass Spectrometry (RP-UHPLC/MS). 
 
-For those new to mass spectrometry or lipidomics, the aim of targeted lipidomics is to measure and even quantify the amount of specific lipids found in a given sample. To tell the mass spectrometer what lipids to measure, a list of multiple reaction monitoring (MRM) transitions (with their corresponding precursor and product ions) is provided. More details on what multiple reaction monitoring (MRM) is can be found in this [webpage](https://www.proteomics.com.au/analytical-services/srms-mrm/) by Proteomics International Laboratories LTD.
+For those new to mass spectrometry or lipidomics, the aim of targeted lipidomics is to measure and even quantify the amount of specific lipids found in a given sample. To tell the mass spectrometer what lipids to measure, a list of multiple reaction monitoring (MRM) transitions (with their corresponding precursor and product ions) is provided. More details on what multiple reaction monitoring (MRM) is can be found in this [webpage](https://www.proteomics.com.au/analytical-services/srms-mrm/){target="_blank"} by Proteomics International Laboratories LTD.
 
 ### Reason for creating quality control (QC) plots
 
@@ -86,9 +87,9 @@ However, variation in a transition's peak area measured between samples can come
 
 In most practices, we want to keep transitions that give peak areas with low variation in the quality control samples. While variations can be measured using summary statistics such as the coefficient of variation, creating quality control (QC) plots can help us identify the cause of the unwanted variation. In this report, two such plots are introduced.
 
-The injection sequence plot is a scatter plot with the peak area (or concentration) on the y-axis and the injection sequence order (or data acquisition time) on the x axis. This is to better understand the variation of peak area in the quality control (QC) sample types over time. A [raincloud plot](https://wellcomeopenresearch.org/articles/4-63) [@Allen2021] is placed on the right of the scatter plot to show the distribution of each (QC) sample type as well as to highlight any potential outliers.
+The injection sequence plot is a scatter plot with the peak area (or concentration) on the y-axis and the injection sequence order (or data acquisition time) on the x axis. This is to better understand the variation of peak area in the quality control (QC) sample types over time. A [raincloud plot](https://wellcomeopenresearch.org/articles/4-63){target="_blank"} [@Allen2021] is placed on the right of the scatter plot to show the distribution of each (QC) sample type as well as to highlight any potential outliers.
 
-The dilution plot, on the other hand, checks for possible signal enhancement or suppression as a result of [detector saturation](https://www.researchgate.net/figure/llustration-of-the-saturation-of-the-MCP-detector-caffeine-m-z-1950882-as-an_fig2_221846657) or [matrix effect](https://www.slideshare.net/amitpatel745/matrix-effect-7614914).
+The dilution plot, on the other hand, checks for possible signal enhancement or suppression as a result of [detector saturation](https://www.researchgate.net/figure/llustration-of-the-saturation-of-the-MCP-detector-caffeine-m-z-1950882-as-an_fig2_221846657){target="_blank"} or [matrix effect](https://www.slideshare.net/amitpatel745/matrix-effect-7614914){target="_blank"}.
 
 # R Packages Used
 
@@ -102,6 +103,8 @@ library("sessioninfo") # R Session Information Posit RPSM v1.2.2
 library("quarto") # R Interface to 'Quarto' Markdown Publishing System Posit RPSM v1.4.4
 library("report") # Automated Reporting of Results and Statistical Models Posit RPSM v0.5.9
 library("knitr") # A General-Purpose Package for Dynamic Report Generation in R CRAN v1.48
+library("fontawesome") # Easily Work with 'Font Awesome' Icons Posit RPSM v0.5.2
+library("verbaliseR") # Make your Text Mighty Fine CRAN v0.1
 
 # For reading files
 library("readr") # Read Rectangular Text Data CRAN v2.1.5
@@ -213,9 +216,20 @@ r_platform_table |>
   )
 ```
 
+# Quarto Extenstion used
+
+This Quarto document uses the Quarto Extension [`schochastics/quarto-social-share`](https://github.com/schochastics/quarto-social-share){target="_blank"}. Prior to rendering this document via command `quarto render index.qmd`, remember to install the extension by running `quarto install extension schochastics/quarto-social-share` in the command line terminal. This will install the extension under the `_extensions` subdirectory. If you're using version control, you will want to check in this directory.
+
 # Input Data
 
-The data we are using are from [Wolrab et. al 2022](https://doi.org/10.1038/s41467-021-27765-9) [@Wolrab2022].
+The data we are using are from [Wolrab et. al 2022](https://doi.org/10.1038/s41467-021-27765-9){target="_blank"} [@Wolrab2022].
+
+Here are the links to the following csv file:
+
+*  [RP-UHPLC_MS_Area.csv](https://raw.githubusercontent.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Area.csv){target="_blank"}
+*  [RP-UHPLC_MS_Transition_Name_Annot.csv](https://raw.githubusercontent.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Transition_Name_Annot.csv){target="_blank"}
+*  [RP-UHPLC_MS_Sample_Annot.csv](https://raw.githubusercontent.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Sample_Annot.csv){target="_blank"}
+*  [RP-UHPLC_MS_Dilution_Annot.csv](https://raw.githubusercontent.com/JauntyJJS/Trelliscopejs_In_Quarto_Example/main/data/RP-UHPLC_MS_Dilution_Annot.csv){target="_blank"}
 
 ::: panel-tabset
 
@@ -274,19 +288,19 @@ transition_name_annot <- readr::read_csv(
 
 Here are the column descriptions.
 
-| Column Name                   | Column Description                                                                                                                             |
-|-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| Transition_Name               | Name of the transition to be mesured in the mass spectrometer.                                                                                 |
-| Lipid_Name                    | Converted transition name to suit lipid nomenclature set by [Liebisch et. al. 2020](https://doi.org/10.1021/acs.jafc.0c07175) [@Liebisch2020]. |
-| For_Rgoslin                   | Input transition for the R package [rgoslin](https://github.com/lifs-tools/rgoslin) [@GOSLIN], [@GOSLIN2] to annotate.                         |
-| Precursor_Ion                 | The ion to be fragmented into smaller fragment ions.                                                                                           |
-| Product_Ion                   | Ions created from fragmentation of the precursor ion.                                                                                          |
-| Retention_Time\_\[min\]       | Transition name's expectred retention time.                                                                                                    |
-| Delta_Retention_Time\_\[min\] | Time window to acquire the transition. Each transition is acquired in the range Retention Time +/- 0.5(Delta Retention Time).                  |
-| Collision_Energy              | Rate of acceleration as the precursor ions enter the Q2 for fragmentation.                                                                     |
-| Cell_Accelerator_Voltage      | Rate of acceleration as the product ions leave the Q2.                                                                                         |
-| Polarity                      | Settings (Positive or Negative) for the mass spectrometry to detect (positive or negative) ions.                                               |
-| isISTD                        | Set to TRUE if the given transition name an internal standard.                                                                                 |
+| Column Name                   | Column Description                                                                                                                                              |
+|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Transition_Name               | Name of the transition to be mesured in the mass spectrometer.                                                                                                  |
+| Lipid_Name                    | Converted transition name to suit lipid nomenclature set by [Liebisch et. al. 2020](https://doi.org/10.1021/acs.jafc.0c07175){target="_blank"} [@Liebisch2020]. |
+| For_Rgoslin                   | Input transition for the R package [rgoslin](https://github.com/lifs-tools/rgoslin){target="_blank"} [@GOSLIN], [@GOSLIN2] to annotate.                         |
+| Precursor_Ion                 | The ion to be fragmented into smaller fragment ions.                                                                                                            |
+| Product_Ion                   | Ions created from fragmentation of the precursor ion.                                                                                                           |
+| Retention_Time\_\[min\]       | Transition name's expectred retention time.                                                                                                                     |
+| Delta_Retention_Time\_\[min\] | Time window to acquire the transition. Each transition is acquired in the range Retention Time +/- 0.5(Delta Retention Time).                                   |
+| Collision_Energy              | Rate of acceleration as the precursor ions enter the Q2 for fragmentation.                                                                                      |
+| Cell_Accelerator_Voltage      | Rate of acceleration as the product ions leave the Q2.                                                                                                          |
+| Polarity                      | Settings (Positive or Negative) for the mass spectrometry to detect (positive or negative) ions.                                                                |
+| isISTD                        | Set to TRUE if the given transition name an internal standard.                                                                                                  |
 
 Here is how the data looks like
 
@@ -327,33 +341,33 @@ sample_annot <- readr::read_csv(
 
 Here are the column descriptions.
 
-+-----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Column Name           | Column Description                                                                                                                                                                                                                                      |
-+=======================+=========================================================================================================================================================================================================================================================+
-| Injection_Sequence    | The order in which the samples are injected to the mass spectrometer for data acquisition.                                                                                                                                                              |
-+-----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Acqusition_Time_Stamp | The time the sample is being measured. It is expressed yyyy-mm-dd hh:mm:ss timezone.                                                                                                                                                                    |
-+-----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Sample_Name           | The name of the sample.                                                                                                                                                                                                                                 |
-+-----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| QC_Sample_Type        | Quality control category of the sample. More information can be found in [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                                                                        |
-|                       |                                                                                                                                                                                                                                                         |
-|                       | -   SPL stands for experimental/unknown samples.                                                                                                                                                                                                        |
-|                       |                                                                                                                                                                                                                                                         |
-|                       | -   BQC stands for batch/pooled quality control.                                                                                                                                                                                                        |
-|                       |                                                                                                                                                                                                                                                         |
-|                       | -   TQC stands for technical (or pooled lipid extracts) quality control.                                                                                                                                                                                |
-|                       |                                                                                                                                                                                                                                                         |
-|                       | -   RQC stands for response (or pooled QC dilution) quality control.                                                                                                                                                                                    |
-|                       |                                                                                                                                                                                                                                                         |
-|                       | -   PBLK stands for processed blanks.                                                                                                                                                                                                                   |
-|                       |                                                                                                                                                                                                                                                         |
-|                       | -   LTR stands for long term reference.                                                                                                                                                                                                                 |
-|                       |                                                                                                                                                                                                                                                         |
-|                       | -   NIST stands for SRM1950 NIST plasma sample from [Simón-Manso et. al. 2013](https://doi.org/10.1021/ac402503m) [@Simón-Manso2013] . It is a standard reference material provides a method to allow quality assessment across different laboratories. |
-+-----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Vial_Position         | The sample's vial position in the autosampler.                                                                                                                                                                                                          |
-+-----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
++-----------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Column Name           | Column Description                                                                                                                                                                                                                                                       |
++=======================+==========================================================================================================================================================================================================================================================================+
+| Injection_Sequence    | The order in which the samples are injected to the mass spectrometer for data acquisition.                                                                                                                                                                               |
++-----------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Acqusition_Time_Stamp | The time the sample is being measured. It is expressed yyyy-mm-dd hh:mm:ss timezone.                                                                                                                                                                                     |
++-----------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Sample_Name           | The name of the sample.                                                                                                                                                                                                                                                  |
++-----------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| QC_Sample_Type        | Quality control category of the sample. More information can be found in [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                                                                        |
+|                       |                                                                                                                                                                                                                                                                          |
+|                       | -   SPL stands for experimental/unknown samples.                                                                                                                                                                                                                         |
+|                       |                                                                                                                                                                                                                                                                          |
+|                       | -   BQC stands for batch/pooled quality control.                                                                                                                                                                                                                         |
+|                       |                                                                                                                                                                                                                                                                          |
+|                       | -   TQC stands for technical (or pooled lipid extracts) quality control.                                                                                                                                                                                                 |
+|                       |                                                                                                                                                                                                                                                                          |
+|                       | -   RQC stands for response (or pooled QC dilution) quality control.                                                                                                                                                                                                     |
+|                       |                                                                                                                                                                                                                                                                          |
+|                       | -   PBLK stands for processed blanks.                                                                                                                                                                                                                                    |
+|                       |                                                                                                                                                                                                                                                                          |
+|                       | -   LTR stands for long term reference.                                                                                                                                                                                                                                  |
+|                       |                                                                                                                                                                                                                                                                          |
+|                       | -   NIST stands for SRM1950 NIST plasma sample from [Simón-Manso et. al. 2013](https://doi.org/10.1021/ac402503m){target="_blank"} [@Simón-Manso2013] . It is a standard reference material provides a method to allow quality assessment across different laboratories. |
++-----------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Vial_Position         | The sample's vial position in the autosampler.                                                                                                                                                                                                                           |
++-----------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 Here is how it looks like
 
@@ -595,7 +609,7 @@ nested_data[1:5,] |>
 
 # Annotate Transition Names
 
-We now add the annotations for each transitions from `transition_name_annot` and [rgoslin](https://github.com/lifs-tools/rgoslin).
+We now add the annotations for each transitions from `transition_name_annot` and [rgoslin](https://github.com/lifs-tools/rgoslin){target="_blank"}.
 
 ## Add `transition_name_annot` annotations
 
@@ -652,9 +666,9 @@ annotated_data[1:5,] |>
 
 ### Small example
 
-The R package [rgoslin](https://github.com/lifs-tools/rgoslin) is useful in getting additional information of lipid names such as the lipid classes. A column called `For_Rgoslin` was created to convert each transition name that can be parsed by [rgoslin](https://github.com/lifs-tools/rgoslin). Unfortunately only [Coenzyme Q10](https://www.lipidmaps.org/databases/lmsd/LMPR02010001?LMID=LMPR02010001) is unable to be parsed by [rgoslin](https://github.com/lifs-tools/rgoslin). We thus add the relevant information manually.
+The R package [rgoslin](https://github.com/lifs-tools/rgoslin){target="_blank"} is useful in getting additional information of lipid names such as the lipid classes. A column called `For_Rgoslin` was created to convert each transition name that can be parsed by [rgoslin](https://github.com/lifs-tools/rgoslin){target="_blank"}. Unfortunately only [Coenzyme Q10](https://www.lipidmaps.org/databases/lmsd/LMPR02010001?LMID=LMPR02010001){target="_blank"} is unable to be parsed by [rgoslin](https://github.com/lifs-tools/rgoslin){target="_blank"}. We thus add the relevant information manually.
 
-Below is an code example (not part of the pipeline) on how [rgoslin](https://github.com/lifs-tools/rgoslin) can be used
+Below is an code example (not part of the pipeline) on how [rgoslin](https://github.com/lifs-tools/rgoslin){target="_blank"} can be used
 
 ```{r}
 #| label: rgoslin demo
@@ -710,18 +724,18 @@ rgoslin_example |>
 
 ### Pipeline example
 
-For the workflow, we do not need all the columns that [rgoslin](https://github.com/lifs-tools/rgoslin) provide.
+For the workflow, we do not need all the columns that [rgoslin](https://github.com/lifs-tools/rgoslin){target="_blank"} provide.
 
 The following columns are kept instead.
 
-| Column Name               | Column Description                                                                                                                                          |
-|---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Lipid.Maps.Category       | [LIPID MAPS'](https://www.lipidmaps.org/databases/lmsd/browse) Structure Database [@Subramaniam2006] Lipid Category which the transition name belongs to.   |
-| Lipid.Maps.Main.Class     | [LIPID MAPS'](https://www.lipidmaps.org/databases/lmsd/browse) Structure Database [@Subramaniam2006] Lipid Main Class which the transition name belongs to. |
-| Species.Name              | Represented by the sum composition, i.e., sum of carbon atoms, double bond equivalent and number of additional oxygen atoms, e.g. FA 18:1;O.                |
-| Molecular.Species.Name    | Represented by lipid species with identified fatty acyl/alkyl residues, e.g. TG 16:0_18:1_18:1.                                                             |
-| Functional.Class.Abbr     | Abbreviation used to describe the lipid's functional class based on the grammar used.                                                                       |
-| Functional.Class.Synonyms | Alternative abbreviations used to describe the lipid's functional class.                                                                                    |
+| Column Name               | Column Description                                                                                                                                                           |
+|---------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Lipid.Maps.Category       | [LIPID MAPS'](https://www.lipidmaps.org/databases/lmsd/browse){target="_blank"} Structure Database [@Subramaniam2006] Lipid Category which the transition name belongs to.   |
+| Lipid.Maps.Main.Class     | [LIPID MAPS'](https://www.lipidmaps.org/databases/lmsd/browse){target="_blank"} Structure Database [@Subramaniam2006] Lipid Main Class which the transition name belongs to. |
+| Species.Name              | Represented by the sum composition, i.e., sum of carbon atoms, double bond equivalent and number of additional oxygen atoms, e.g. FA 18:1;O.                                 |
+| Molecular.Species.Name    | Represented by lipid species with identified fatty acyl/alkyl residues, e.g. TG 16:0_18:1_18:1.                                                                              |
+| Functional.Class.Abbr     | Abbreviation used to describe the lipid's functional class based on the grammar used.                                                                                        |
+| Functional.Class.Synonyms | Alternative abbreviations used to describe the lipid's functional class.                                                                                                     |
 
 ```{r}
 #| label: add rgoslin annotation
@@ -1062,31 +1076,31 @@ summary_data[1:5,] |>
 
 The following statistics are calculated from `sample_data`.
 
-| Column Name              | Column Description                                                                                                                                                                                     |
-|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| bqc_mean                 | Mean signal from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                                            |
-| bqc_median               | Median signal from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                                          |
-| bqc_sd                   | Standard deviation of signal from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                           |
-| bqc_mad                  | Median absolute deviation of signal from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                    |
-| bqc_cv\_%                | Coefficient of variation of signal in % from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                |
-| bqc_cv_robust\_%         | Robust coefficient of variation of signal in % from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                         |
-| tqc_mean                 | Mean signal from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                    |
-| tqc_median               | Median signal from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                  |
-| tqc_sd                   | Standard deviation of signal from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                   |
-| tqc_mad                  | Median absolute deviation of signal techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                 |
-| tqc_cv\_%                | Coefficient of variation of signal in % from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].        |
-| tqc_cv_robust\_%         | Robust coefficient of variation in % of signal from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018]. |
-| spl_mean                 | Mean signal from experimental (unknown) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                                     |
-| spl_median               | Median signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                                           |
-| spl_sd                   | Standard deviation of signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                            |
-| spl_mad                  | Median absolute deviation of signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                     |
-| spl_cv\_%                | Coefficient of variation in % of signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                 |
-| spl_cv_robust\_%         | Robust coefficient of variation in % of signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                          |
-| pblk_median              | Median signal from processed blank samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3) [@Broadhurst2018].                                                          |
-| pblk_to_tqc_ratio\_%     | Ratio of median signal from processed blank sample to median signal from techincal QC (or pooled lipid extracts) samples.                                                                              |
-| bqc_cv\_\>20%            | Set to TRUE if `bqc_cv` is greater than 20%.                                                                                                                                                           |
-| tqc_cv\_\>20%            | Set to TRUE if `tqc_cv` is greater than 20%.                                                                                                                                                           |
-| pblk_to_tqc_ratio\_\>10% | Set to TRUE if `pblk_to_tqc_ratio_%` is greater than 10%.                                                                                                                                              |
+| Column Name              | Column Description                                                                                                                                                                                                      |
+|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| bqc_mean                 | Mean signal from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                                            |
+| bqc_median               | Median signal from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                                          |
+| bqc_sd                   | Standard deviation of signal from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                           |
+| bqc_mad                  | Median absolute deviation of signal from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                    |
+| bqc_cv\_%                | Coefficient of variation of signal in % from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                |
+| bqc_cv_robust\_%         | Robust coefficient of variation of signal in % from batch/pooled QC samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                         |
+| tqc_mean                 | Mean signal from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                    |
+| tqc_median               | Median signal from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                  |
+| tqc_sd                   | Standard deviation of signal from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                   |
+| tqc_mad                  | Median absolute deviation of signal techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                 |
+| tqc_cv\_%                | Coefficient of variation of signal in % from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].        |
+| tqc_cv_robust\_%         | Robust coefficient of variation in % of signal from techincal QC (or pooled lipid extracts) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018]. |
+| spl_mean                 | Mean signal from experimental (unknown) samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                                     |
+| spl_median               | Median signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                                           |
+| spl_sd                   | Standard deviation of signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                            |
+| spl_mad                  | Median absolute deviation of signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                     |
+| spl_cv\_%                | Coefficient of variation in % of signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                 |
+| spl_cv_robust\_%         | Robust coefficient of variation in % of signal from experimental (unknown) defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                          |
+| pblk_median              | Median signal from processed blank samples defined by [Broadhurst et. al. 2018](https://doi.org/10.1007/s11306-018-1367-3){target="_blank"} [@Broadhurst2018].                                                          |
+| pblk_to_tqc_ratio\_%     | Ratio of median signal from processed blank sample to median signal from techincal QC (or pooled lipid extracts) samples.                                                                                               |
+| bqc_cv\_\>20%            | Set to TRUE if `bqc_cv` is greater than 20%.                                                                                                                                                                            |
+| tqc_cv\_\>20%            | Set to TRUE if `tqc_cv` is greater than 20%.                                                                                                                                                                            |
+| pblk_to_tqc_ratio\_\>10% | Set to TRUE if `pblk_to_tqc_ratio_%` is greater than 10%.                                                                                                                                                               |
 
 The relevant functions to do these calculations are as follows.
 
@@ -1256,7 +1270,7 @@ summary_data[1:5,] |>
 
 # Plotting Palette
 
-In this section, we create the palette for our dilution plots as well as our injection sequence plots. The [Okato-Ito palette](https://jfly.uni-koeln.de/color/index.html) [@OkabeIto2008] is used.
+In this section, we create the palette for our dilution plots as well as our injection sequence plots. The [Okato-Ito palette](https://jfly.uni-koeln.de/color/index.html){target="_blank"} [@OkabeIto2008] is used.
 
 The relevant utility functions to do this are as follows.
 
@@ -2275,10 +2289,12 @@ update_cog_manual <- function(summary_table, cog_df,
       summary_table <- summary_table |>
         dplyr::mutate(
           dplyr::across(
-            dplyr::one_of(cog_df[[col_name_vec]][row_index]),
-            trelliscopejs::cog,
-            desc = cog_df[[desc_vec]][row_index],
-            type = cog_df[[type_vec]][row_index]
+            .cols = dplyr::one_of(cog_df[[col_name_vec]][row_index]),
+            .fns  = \(x) trelliscopejs::cog(
+              val = x, 
+              desc = cog_df[[desc_vec]][row_index], 
+              type = cog_df[[type_vec]][row_index]
+            )
           )
         )
     }
@@ -2434,12 +2450,12 @@ convert_to_cog <- function(summary_table, cog_df = NULL,
 
 ## Cognostics Setup
 
-The function [`trelliscopejs::cog`](https://hafen.github.io/trelliscopejs/reference/cog.html) is used to convert a column into cognostic object. The following meta information must be provided in order for the conversion to be successful.
+The function [`trelliscopejs::cog`](https://hafen.github.io/trelliscopejs/reference/cog.html){target="_blank"} is used to convert a column into cognostic object. The following meta information must be provided in order for the conversion to be successful.
 
 Given a column name, we need to provide
 
 * Description of the column name (meta information)
-* The type of cognostics to used. For our example only "numeric" and "factor" are used. Other factor types can be found in the documentation of [`trelliscopejs::cog`](https://hafen.github.io/trelliscopejs/reference/cog.html)
+* The type of cognostics to used. For our example only "numeric" and "factor" are used. Other factor types can be found in the documentation of [`trelliscopejs::cog`](https://hafen.github.io/trelliscopejs/reference/cog.html){target="_blank"}
 
 Here are the relevant functions to create our meta information tibble.
 
@@ -2889,10 +2905,8 @@ Here is a trellis plot for the dilution curves.
 trelliscope_name <- "Dilution Plot"
 
 # Conditional cognostics must always be displayed as a label
-  trellis_labels <- c(
-    "Transition_Name"
-  ) %>% 
-    unique()
+trellis_labels <- c("Transition_Name") |> 
+  unique()
 
 # If we only have one label to display
 # Set it as NULL as it will automatically
@@ -2931,10 +2945,8 @@ Here is a trellis plot for the injection sequence plots.
 trelliscope_name <- "Injection Sequence Plot"
 
 # Conditional cognostics must always be displayed as a label
-  trellis_labels <- c(
-    "Transition_Name"
-  ) %>% 
-    unique()
+trellis_labels <- c("Transition_Name") |> 
+  unique()
 
 # If we only have one label to display
 # Set it as NULL as it will automatically
@@ -2975,10 +2987,8 @@ Unfortunately, the trellis plot does not seems to function properly in the Quart
 trelliscope_name <- "Dilution Plot"
 
 # Conditional cognostics must always be displayed as a label
-  trellis_labels <- c(
-    "Transition_Name"
-  ) %>% 
-    unique()
+trellis_labels <- c("Transition_Name") |> 
+  unique()
 
 # If we only have one label to display
 # Set it as NULL as it will automatically
@@ -3025,9 +3035,9 @@ injection_sequence_trellis  |>
 
 ```
 
-A `docs` folder will be created. It is currently placed in this [GitHub repository](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Supplementary1). 
+A `docs` folder will be created. It is currently placed in this [GitHub repository](https://github.com/JauntyJJS/Trelliscopejs_In_Quarto_Supplementary1){target="_blank"}. 
 
-Below is just an embedded webpage of the trellis plot. It can be accessed via this [GitHub Page link](https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Supplementary1/).
+Below is just an embedded webpage of the trellis plot. It can be accessed via this [GitHub Page link](https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Supplementary1/){target="_blank"}.
 
 ```{=html}
 <iframe width="1100" height="520" src="https://jauntyjjs.github.io/Trelliscopejs_In_Quarto_Supplementary1/"></iframe>
@@ -3045,4 +3055,5 @@ report::cite_packages() |>
 ```
 
 # References
+
 

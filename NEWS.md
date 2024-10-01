@@ -6,6 +6,9 @@
 
 * Updated R version and packages.
 * Added R package description using R package [`annotater`](https://annotater.liomys.mx/index.html)
+* Change twitter icon to X
+* Add a date in which the document is rendered automatically
+* Address [`dplyr::across`](https://dplyr.tidyverse.org/reference/across.html) warning that `...` is deprecated
 
 # Trelliscopejs_In_Quarto_Example 1.0.2
 

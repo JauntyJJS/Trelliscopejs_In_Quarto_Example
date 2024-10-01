@@ -1559,6 +1559,16 @@
       ],
       "Hash": "c03fa420630029418f7e6da3667aac4a"
     },
+    "verbaliseR": {
+      "Package": "verbaliseR",
+      "Version": "0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "stringr"
+      ],
+      "Hash": "21d4775fd454341bede5dcf2648264bb"
+    },
     "viridisLite": {
       "Package": "viridisLite",
       "Version": "0.4.2",
